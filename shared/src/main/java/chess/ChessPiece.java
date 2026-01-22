@@ -1,6 +1,7 @@
 package chess;
 
 import chess.MoveCalculations.BishopMoves;
+import chess.MoveCalculations.QueenMoves;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +62,11 @@ public class ChessPiece {
         Collection<ChessMove> moves = new ArrayList<>();
         if (getPieceType() == PieceType.BISHOP) {
             BishopMoves calc = new BishopMoves();
+            moves.addAll(calc.getMoves(board, myPosition));
+        }
+
+        if (getPieceType() == PieceType.QUEEN) {
+            QueenMoves calc = new QueenMoves();
             moves.addAll(calc.getMoves(board, myPosition));
         }
         return moves;

@@ -47,4 +47,24 @@ public class ChessMove {
     public String toString() {
         return String.format("%s%s", startPosition, endPosition);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ChessMove chessMove = (ChessMove) o;
+
+        if (!startPosition.equals(chessMove.startPosition)) return false;
+        if (!endPosition.equals(chessMove.endPosition)) return false;
+        return promotionPiece == chessMove.promotionPiece;   // null-safe because enum or null
+    }
+
+    @Override
+    public int hashCode() {
+        int finalResult = startPosition.hashCode();
+        finalResult = 31 * finalResult + endPosition.hashCode();
+        finalResult = 31 * finalResult + (promotionPiece != null ? promotionPiece.hashCode() : 0);
+        return finalResult;
+    }
 }

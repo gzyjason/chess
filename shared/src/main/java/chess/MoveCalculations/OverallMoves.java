@@ -23,7 +23,7 @@ public class OverallMoves {
             int k = myPosition.getRow() + row[j];
             int l = myPosition.getColumn() + col[j];
             while (k >= 1 && k <= 8 && l >= 1 && l <=8){
-                ChessPosition target = new ChessPosition(l, k);
+                ChessPosition target = new ChessPosition(k, l);
                 ChessPiece reached = board.getPiece(target);
                 if(reached == null) {
                     moves.add(target);

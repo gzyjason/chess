@@ -2,6 +2,7 @@ package chess;
 
 import chess.MoveCalculations.BishopMoves;
 import chess.MoveCalculations.QueenMoves;
+import chess.MoveCalculations.RookMoves;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +68,11 @@ public class ChessPiece {
 
         if (getPieceType() == PieceType.QUEEN) {
             QueenMoves calc = new QueenMoves();
+            moves.addAll(calc.getMoves(board, myPosition));
+        }
+
+        if (getPieceType() == PieceType.ROOK) {
+            RookMoves calc = new RookMoves();
             moves.addAll(calc.getMoves(board, myPosition));
         }
         return moves;

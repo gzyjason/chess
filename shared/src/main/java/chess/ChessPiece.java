@@ -14,8 +14,7 @@ public class ChessPiece {
 
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
-    private int[] temp = new int[2];
-    private ArrayList<ChessPosition> result = new ArrayList<>();
+
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
@@ -64,20 +63,5 @@ public class ChessPiece {
         return List.of();
     }
 
-    public void BoardEdge(ChessBoard board, ChessPosition myPosition, int[] row, int[]col){
-        for(int i = 0; i < row.length; i++){
-            temp[1] = myPosition.getColumn() + col[i];
-            temp[0] = myPosition.getRow() + row[i];
-            while (temp[0] >= 1 && temp[0] <= 8 && temp[1] >= 1 && temp[1] <=8){
-                ChessPosition tempPosition = new ChessPosition(temp[0], temp[1]);
-                if(board.getPiece(tempPosition).getTeamColor() != board.getPiece(myPosition).getTeamColor()){
-                     result.add(tempPosition);
-                     break;
-                }
-                result.add(tempPosition);
-                temp[0] = temp[0] + row[i];
-                temp[1] = temp[1] + col[i];
-            }
-        }
-    }
+
 }

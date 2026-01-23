@@ -36,4 +36,5 @@ public class KnightMoves {
         }
         return moves;
     }
+
 }

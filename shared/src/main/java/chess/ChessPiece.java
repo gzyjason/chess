@@ -84,6 +84,12 @@ public class ChessPiece {
             KnightMoves calc = new KnightMoves();
             moves.addAll(calc.getMoves(board, myPosition));
         }
+
+        if (getPieceType() == PieceType.PAWN){
+            PawnMoves calc = new PawnMoves();
+            moves.addAll(calc.getMoves(board, myPosition));
+        }
+
         return moves;
     }
 

@@ -89,6 +89,20 @@ public class ChessBoard {
 
     }
 
+    public ChessBoard cloneBoard(){
+        ChessBoard clone = new ChessBoard();
+        for (int r = 1; r <= 8; r++){
+            for (int c = 1; c <= 8; c++){
+                ChessPosition pst = new ChessPosition(r, c);
+                ChessPiece piece = this.getPiece(pst);
+                if (piece != null){
+                    clone.addPiece(pst, piece);
+                }
+            }
+        }
+        return clone;
+    }
+
     public String boardToString(boolean white){
 
         StringBuilder boardString = new StringBuilder();

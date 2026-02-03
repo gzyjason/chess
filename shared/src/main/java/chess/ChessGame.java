@@ -144,7 +144,7 @@ public class ChessGame {
                 if (piece != null && piece.getTeamColor() == teamColor){
                     Collection<ChessMove> legalMoves = validMoves(pst);
                     if (legalMoves != null && !legalMoves.isEmpty()){
-                        return false
+                        return false;
                     }
                 }
             }

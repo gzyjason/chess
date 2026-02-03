@@ -15,6 +15,7 @@ public class ChessGame {
     public ChessGame() {
         this.movingPiece = TeamColor.WHITE;
     }
+    private ChessBoard board;
 
     /**
      * @return Which team's turn it is
@@ -136,6 +137,19 @@ public class ChessGame {
         if (!isInCheck(teamColor)){
             return false;
         }
+        for (int r = 1; r <= 8; r++){
+            for (int c = 1; c <= 8; c++){
+                ChessPosition pst = new ChessPosition(r, c);
+                ChessPiece piece = getBoard().getPiece(pst);
+                if (piece != null && piece.getTeamColor() == teamColor){
+                    Collection<ChessMove> legalMoves = validMoves(pst);
+                    if (legalMoves != null && !legalMoves.isEmpty()){
+                        return false
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -155,7 +169,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**
@@ -164,7 +178,7 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return this.board;
     }
 
     private ChessPosition getKingPosition(TeamColor team){

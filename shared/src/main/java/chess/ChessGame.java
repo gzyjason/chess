@@ -12,10 +12,13 @@ import java.util.Objects;
  */
 public class ChessGame {
     private TeamColor movingPiece;
+    private ChessBoard board;
     public ChessGame() {
         this.movingPiece = TeamColor.WHITE;
+        this.board = new ChessBoard();
+        this.board.resetBoard();
     }
-    private ChessBoard board;
+
 
     /**
      * @return Which team's turn it is

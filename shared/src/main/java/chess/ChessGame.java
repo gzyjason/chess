@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -78,7 +79,23 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessBoard board = getBoard();
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+        if (piece == null || piece.getTeamColor() != getTeamTurn()){
+            throw new InvalidMoveException();
+        }
+        if (legalMoves == null || !legalMoves.contains(move)) {
+            throw new InvalidMoveException();
+        }
+        getBoard().addPiece(move.getEndPosition(), piece);
+        getBoard().addPiece(move.getStartPosition(), null);
+
+        if (getTeamTurn() == TeamColor.WHITE){
+            setTeamTurn(TeamColor.BLACK);
+        } else {
+            setTeamTurn(TeamColor.WHITE);
+        }
     }
 
     /**
@@ -116,7 +133,9 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)){
+            return false;
+        }
     }
 
     /**
@@ -160,5 +179,19 @@ public class ChessGame {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return movingPiece == chessGame.movingPiece;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(movingPiece);
     }
 }

@@ -91,59 +91,16 @@ public class ChessBoard {
 
     public ChessBoard cloneBoard(){
         ChessBoard clone = new ChessBoard();
-        for (int r = 1; r <= 8; r++){
-            for (int c = 1; c <= 8; c++){
-                ChessPosition pst = new ChessPosition(r, c);
-                ChessPiece piece = this.getPiece(pst);
+        for (int row = 1; row <= 8; row++){
+            for (int col = 1; col <= 8; col++){
+                ChessPosition myPosition = new ChessPosition(row, col);
+                ChessPiece piece = this.getPiece(myPosition);
                 if (piece != null){
-                    clone.addPiece(pst, piece);
+                    clone.addPiece(myPosition, piece);
                 }
             }
         }
         return clone;
-    }
-
-    public String boardToString(boolean white){
-
-        StringBuilder boardString = new StringBuilder();
-
-        int iStart = white ? 7 : 0;
-        int jStart = white ? 0 : 7;
-
-        int iStep = white ? -1 : 1;
-        int jStep = white ? 1 : -1;
-
-
-        for(int i=iStart; white ? i>=0: i<8; i+=iStep){
-            for(int j=jStart; white ? j<8 : j>=0; j+=jStep){
-                if(squares[i][j] == null){
-                    boardString.append(" ");
-                }
-                else if(squares[i][j].getTeamColor() == ChessGame.TeamColor.WHITE){
-                    switch (squares[i][j].getPieceType()) {
-                        case ROOK -> boardString.append("R");
-                        case KNIGHT -> boardString.append("N");
-                        case BISHOP -> boardString.append("B");
-                        case QUEEN -> boardString.append("Q");
-                        case KING -> boardString.append("K");
-                        case PAWN -> boardString.append("P");
-                    }
-                }
-                else{
-                    switch (squares[i][j].getPieceType()) {
-                        case ROOK -> boardString.append("r");
-                        case KNIGHT -> boardString.append("n");
-                        case BISHOP -> boardString.append("b");
-                        case QUEEN -> boardString.append("q");
-                        case KING -> boardString.append("k");
-                        case PAWN -> boardString.append("p");
-                    }
-                }
-            }
-            boardString.append("\n");
-        }
-
-        return boardString.toString();
     }
 
     @Override

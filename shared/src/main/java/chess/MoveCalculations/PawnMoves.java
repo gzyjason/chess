@@ -6,30 +6,29 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PawnMoves {
-    public Collection<ChessMove> getMoves(ChessBoard board, ChessPosition pst) {
+    public Collection<ChessMove> getMoves(ChessBoard board, ChessPosition myPosition) {
         ArrayList<ChessMove> moves = new ArrayList<>();
-        ArrayList<ChessPosition> target = new ArrayList<>();
 
-        ChessPiece currentPiece = board.getPiece(pst);
+        ChessPiece currentPiece = board.getPiece(myPosition);
         int direction = (currentPiece.getTeamColor() == ChessGame.TeamColor.WHITE) ? 1 : -1;
         int startRow = (currentPiece.getTeamColor() == ChessGame.TeamColor.WHITE) ? 2 : 7;
-        int fwdRow = pst.getRow() + direction;
+        int fwdRow = myPosition.getRow() + direction;
         if(fwdRow >= 1 && fwdRow <= 8) {
-            ChessPosition fwd = new ChessPosition(fwdRow, pst.getColumn());
+            ChessPosition fwd = new ChessPosition(fwdRow, myPosition.getColumn());
             if(board.getPiece(fwd) == null){
-                PawnPromo(pst, fwd, moves);
+                PawnPromo(myPosition, fwd, moves);
 
-                if(pst.getRow() == startRow){
-                    int doubleFwdRow = pst.getRow() + (2 * direction);
-                    ChessPosition doubleFwd = new ChessPosition(doubleFwdRow, pst.getColumn());
+                if(myPosition.getRow() == startRow){
+                    int doubleFwdRow = myPosition.getRow() + (2 * direction);
+                    ChessPosition doubleFwd = new ChessPosition(doubleFwdRow, myPosition.getColumn());
                     if(board.getPiece(doubleFwd) == null){
-                        PawnPromo(pst, doubleFwd, moves);
+                        PawnPromo(myPosition, doubleFwd, moves);
                     }
                 }
             }
         }
-        PawnCapture(board, pst, pst.getRow() + direction, pst.getColumn() - 1, moves);
-        PawnCapture(board, pst, pst.getRow() + direction, pst.getColumn() + 1, moves);
+        PawnCapture(board, myPosition, myPosition.getRow() + direction, myPosition.getColumn() - 1, moves);
+        PawnCapture(board, myPosition, myPosition.getRow() + direction, myPosition.getColumn() + 1, moves);
         return moves;
     }
 

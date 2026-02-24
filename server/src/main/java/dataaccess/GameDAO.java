@@ -35,5 +35,6 @@ public class GameDAO {
 
     public void clear() {
         gameDataMap.clear();
+        nextId = 1;
     }
 }

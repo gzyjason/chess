@@ -4,6 +4,7 @@ import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
+import model.AuthData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,11 +21,12 @@ public class UserServiceTests {
 
     @BeforeEach
     public void setup(){
-        userDAO = new UserDAO();
-        authDAO = new AuthDAO();
-        gameDAO = new GameDAO();
-        userService = new UserService(userDAO, authDAO, gameDAO);
+        this.userDAO = new UserDAO();
+        this.authDAO = new AuthDAO();
+        this.gameDAO = new GameDAO();
+        this.userService = new UserService(userDAO, authDAO, gameDAO);
     }
+
 
     @Test
     public void registerSuccessTest() throws DataAccessException {
@@ -70,6 +72,26 @@ public class UserServiceTests {
 
         DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> {
             userService.login(loginRequest);
+        });
+
+        Assertions.assertEquals("Error: unauthorized", exception.getMessage());
+    }
+
+    @Test
+    public  void logoutSuccessTest() throws DataAccessException {
+        RegisterResult registerResult = userService.register(new RegisterRequest("Tom", "password123",
+                "abc123@byu.edu"));
+
+        userService.logout(registerResult.authToken());
+
+        Assertions.assertNull(authDAO.getAuth(registerResult.authToken()));
+    }
+
+    @Test
+    public void logoutInvalidTest() throws DataAccessException {
+        String tempToken = "fake-token123";
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> {
+            userService.logout(tempToken);
         });
 
         Assertions.assertEquals("Error: unauthorized", exception.getMessage());

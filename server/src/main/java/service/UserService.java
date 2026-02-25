@@ -2,15 +2,19 @@ package service;
 import dataaccess.*;
 import model.AuthData;
 import model.UserData;
+import request.LoginRequest;
 import request.RegisterRequest;
+import results.LoginResult;
 import results.RegisterResult;
 import java.util.UUID;
 
 public class UserService {
     private final UserDAO userDAO;
+    private final AuthDAO authDAO;
 
     public UserService(UserDAO userDAO, AuthDAO authDAO, GameDAO gameDAO) {
         this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
@@ -18,7 +22,7 @@ public class UserService {
             throw new DataAccessException("Error: bad request");
         }
         if (userDAO.getUser(request.username()) != null) {
-            throw new DataAccessException("Error: already taken");
+            throw new DataAccessException("Error: unavailable");
         }
 
         UserData newUser = new UserData(request.username(), request.password(), request.email());
@@ -28,5 +32,19 @@ public class UserService {
         AuthData authData = new AuthData(authToken, request.username());
 
         return new RegisterResult(request.username(), authToken);
+    }
+
+    public LoginResult login(LoginRequest request) throws DataAccessException {
+        UserData player = userDAO.getUser(request.username());
+
+        if(player == null || !player.password().equals(request.password())){
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        String authToken = UUID.randomUUID().toString();
+        AuthData authData = new AuthData(authToken, request.username());
+        authDAO.createAuth(authData);
+
+        return new LoginResult(request.username(), authToken);
     }
 }

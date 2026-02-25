@@ -8,13 +8,13 @@ import java.util.Map;
 public class GameDAO {
     private final Map<Integer, GameData> gameDataMap = new HashMap<>();
 
-    private int nextId = 1;
+    private int newGameId = 1;
 
     public int createGame(GameData game) throws DataAccessException {
-        GameData newGame = new GameData(nextId, game.whiteUsername(), game.blackUsername(), game.gameName(),
+        GameData newGame = new GameData(newGameId, game.teamAUsername(), game.teamBUsername(), game.gameName(),
                 game.game());
-        gameDataMap.put(nextId, newGame);
-        nextId++;
+        gameDataMap.put(newGameId, newGame);
+        newGameId++;
         return newGame.gameID();
     }
 
@@ -24,7 +24,7 @@ public class GameDAO {
 
     public void updateGame(GameData game) throws DataAccessException {
         if (!gameDataMap.containsKey(game.gameID())){
-            throw new DataAccessException("Error: game doesn't exist");
+            throw new DataAccessException("Error: game not created");
         }
         gameDataMap.put(game.gameID(), game);
     }
@@ -35,6 +35,6 @@ public class GameDAO {
 
     public void clear() {
         gameDataMap.clear();
-        nextId = 1;
+        newGameId = 1;
     }
 }

@@ -26,8 +26,6 @@ public class ClearServiceTests {
     public void clearDataTest() throws DataAccessException {
         userDAO.insertUser(new UserData("Tom", "password123", "abc123@byu.edu"));
         authDAO.createAuth(new AuthData("token123", "Tom"));
-        int firstId = gameDAO.createGame((new GameData(0, null, null,
-                "Test Game", new ChessGame())));
         service.clear();
 
         Assertions.assertNull(userDAO.getUser("Tom"), "User should be gone");

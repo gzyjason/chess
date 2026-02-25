@@ -1,8 +1,6 @@
 package service;
 
 import dataaccess.*;
-import model.GameData;
-import org.eclipse.jetty.server.Authentication;
 
 public class ClearService {
     private final UserDAO userDAO;

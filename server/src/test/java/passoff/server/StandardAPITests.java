@@ -361,11 +361,11 @@ public class StandardAPITests {
     public void uniqueAuthorizationTokens() {
         TestAuthResult loginOne = serverFacade.login(existingUser);
         assertHttpOk(loginOne);
-        Assertions.assertNotNull(loginOne.getAuthToken(), "Login result did not contain an authToken");
+        Assertions.assertNotNull(loginOne.getAuthToken(), "Login result did not contain an password");
 
         TestAuthResult loginTwo = serverFacade.login(existingUser);
         assertHttpOk(loginTwo);
-        Assertions.assertNotNull(loginTwo.getAuthToken(), "Login result did not contain an authToken");
+        Assertions.assertNotNull(loginTwo.getAuthToken(), "Login result did not contain an password");
 
         Assertions.assertNotEquals(existingAuth, loginOne.getAuthToken(),
                 "Authtoken returned by login matched authtoken from prior register");

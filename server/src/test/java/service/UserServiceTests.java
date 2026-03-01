@@ -2,9 +2,7 @@ package service;
 
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
-import dataaccess.GameDAO;
 import dataaccess.UserDAO;
-import model.AuthData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,15 +14,13 @@ import results.RegisterResult;
 public class UserServiceTests {
     private UserDAO userDAO;
     private AuthDAO authDAO;
-    private GameDAO gameDAO;
     private UserService userService;
 
     @BeforeEach
     public void setup(){
         this.userDAO = new UserDAO();
         this.authDAO = new AuthDAO();
-        this.gameDAO = new GameDAO();
-        this.userService = new UserService(userDAO, authDAO, gameDAO);
+        this.userService = new UserService(userDAO, authDAO);
     }
 
 
@@ -44,18 +40,14 @@ public class UserServiceTests {
 
         RegisterRequest request2 = new RegisterRequest("Tom", "password123", "abc123@byu.edu");
 
-        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> {
-            userService.register(request2);
-        });
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> userService.register(request2));
 
         Assertions.assertEquals("Error: unavailable", exception.getMessage());
     }
 
     @Test
     public void loginSuccessTest() throws DataAccessException {
-        RegisterRequest registerRequest = new RegisterRequest("Tom", "password123",
-                "abc123@byu.edu");
-        RegisterResult registerResult = userService.register(registerRequest);
+
 
         LoginRequest loginRequest = new LoginRequest("Tom", "password123");
         LoginResult loginResult = userService.login(loginRequest);
@@ -70,9 +62,8 @@ public class UserServiceTests {
         userService.register(new RegisterRequest("Tom", "password123", "abc123@byu.edu"));
         LoginRequest loginRequest = new LoginRequest("Tom", "321drowssap");
 
-        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> {
-            userService.login(loginRequest);
-        });
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
+                () -> userService.login(loginRequest));
 
         Assertions.assertEquals("Error: unauthorized", exception.getMessage());
     }
@@ -88,11 +79,10 @@ public class UserServiceTests {
     }
 
     @Test
-    public void logoutInvalidTest() throws DataAccessException {
+    public void logoutInvalidTest() {
         String tempToken = "fake-token123";
-        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> {
-            userService.logout(tempToken);
-        });
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
+                () -> userService.logout(tempToken));
 
         Assertions.assertEquals("Error: unauthorized", exception.getMessage());
     }

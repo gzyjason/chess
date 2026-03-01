@@ -26,9 +26,9 @@ public class GameService {
             throw  new DataAccessException("Error: bad request");
         }
 
-        int newGameID = gameDAO.createGame(new GameData(0, null, null, request.gameName(), new ChessGame()));
+        int newGame = gameDAO.createGame(new GameData(0, null, null, request.gameName(), new ChessGame()));
 
-        return new CreateGameResult(newGameID);
+        return new CreateGameResult(newGame);
     }
 
     public ListGamesResult listGames (String authToken) throws DataAccessException {
@@ -37,7 +37,6 @@ public class GameService {
         }
 
         Collection<GameData> games = gameDAO.listGames();
-
         return new ListGamesResult(games);
     }
 }

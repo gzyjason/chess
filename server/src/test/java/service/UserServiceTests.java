@@ -43,7 +43,7 @@ public class UserServiceTests {
         DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
                 () -> userService.register(request2));
 
-        Assertions.assertEquals("Error: already taken", exception.getMessage());
+        Assertions.assertEquals("Username taken", exception.getMessage());
     }
 
     @Test

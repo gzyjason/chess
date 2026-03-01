@@ -6,35 +6,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameDAO {
-    private final Map<Integer, GameData> gameDataMap = new HashMap<>();
+    private final Map<Integer, GameData> games = new HashMap<>();
 
     private int newGameId = 1;
 
-    public int createGame(GameData game) throws DataAccessException {
-        GameData newGame = new GameData(newGameId, game.teamAUsername(), game.teamBUsername(), game.gameName(),
+    public int createGame(GameData game) {
+        int gameId = newGameId++;
+        GameData newGame = new GameData(gameId, game.teamAUsername(), game.teamBUsername(), game.gameName(),
                 game.game());
-        gameDataMap.put(newGameId, newGame);
-        newGameId++;
-        return newGame.gameID();
+        games.put(gameId, newGame);
+        return gameId;
     }
 
-    public GameData getGame(int id) throws DataAccessException{
-        return gameDataMap.get(id);
+    public GameData getGame(int gameId) {
+        return games.get(gameId);
     }
 
     public void updateGame(GameData game) throws DataAccessException {
-        if (!gameDataMap.containsKey(game.gameID())){
-            throw new DataAccessException("Error: game not created");
+        if (!games.containsKey(game.gameID())){
+            throw new DataAccessException("Game not found");
         }
-        gameDataMap.put(game.gameID(), game);
+        games.put(game.gameID(), game);
     }
 
-    public Collection<GameData> listGames() throws DataAccessException {
-        return gameDataMap.values();
+    public Collection<GameData> listGames() {
+        return games.values();
     }
 
     public void clear() {
-        gameDataMap.clear();
+        games.clear();
         newGameId = 1;
     }
 }

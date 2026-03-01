@@ -4,20 +4,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UserDAO {
-    private final Map<String, UserData> userDataMap = new HashMap<>();
+    private final Map<String, UserData> users = new HashMap<>();
 
     public void insertUser(UserData user) throws DataAccessException {
-        if (userDataMap.containsKey(user.username())){
-            throw new DataAccessException("Error: username unavailable");
+        if (users.containsKey(user.username())){
+            throw new DataAccessException("Username taken");
         }
-        userDataMap.put(user.username(), user);
+        users.put(user.username(), user);
     }
 
-    public UserData getUser(String username) throws DataAccessException {
-        return userDataMap.get(username);
+    public UserData getUser(String username) {
+        return users.get(username);
     }
 
     public void clear() {
-        userDataMap.clear();
+        users.clear();
     }
 }

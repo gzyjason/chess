@@ -22,30 +22,27 @@ public class UserService {
             throw new DataAccessException("Error: bad request");
         }
         if (userDAO.getUser(request.username()) != null) {
-            throw new DataAccessException("Error: already taken");
+            throw new DataAccessException("Username taken");
         }
 
-        UserData newUser = new UserData(request.username(), request.password(), request.email());
-        userDAO.insertUser(newUser);
+        UserData user = new UserData(request.username(), request.password(), request.email());
+        userDAO.insertUser(user);
 
         String authToken = UUID.randomUUID().toString();
-        AuthData authData = new AuthData(authToken, request.username());
-
-        authDAO.createAuth(authData);
+        authDAO.createAuth(new AuthData(authToken, request.username()));
 
         return new RegisterResult(request.username(), authToken);
     }
 
     public LoginResult login(LoginRequest request) throws DataAccessException {
-        UserData player = userDAO.getUser(request.username());
+        UserData user = userDAO.getUser(request.username());
 
-        if(player == null || !player.password().equals(request.password())){
+        if(user == null || !user.password().equals(request.password())){
             throw new DataAccessException("Error: unauthorized");
         }
 
         String authToken = UUID.randomUUID().toString();
-        AuthData authData = new AuthData(authToken, request.username());
-        authDAO.createAuth(authData);
+        authDAO.createAuth(new AuthData(authToken, request.username()));
 
         return new LoginResult(request.username(), authToken);
     }

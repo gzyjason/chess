@@ -22,7 +22,7 @@ public class UserService {
             throw new DataAccessException("Error: bad request");
         }
         if (userDAO.getUser(request.username()) != null) {
-            throw new DataAccessException("Error: unavailable");
+            throw new DataAccessException("Error: already taken");
         }
 
         UserData newUser = new UserData(request.username(), request.password(), request.email());

@@ -40,14 +40,15 @@ public class UserServiceTests {
 
         RegisterRequest request2 = new RegisterRequest("Tom", "password123", "abc123@byu.edu");
 
-        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () -> userService.register(request2));
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
+                () -> userService.register(request2));
 
-        Assertions.assertEquals("Error: unavailable", exception.getMessage());
+        Assertions.assertEquals("Error: already taken", exception.getMessage());
     }
 
     @Test
     public void loginSuccessTest() throws DataAccessException {
-
+        userService.register(new RegisterRequest("Tom", "password123", "abc123@byu.edu"));
 
         LoginRequest loginRequest = new LoginRequest("Tom", "password123");
         LoginResult loginResult = userService.login(loginRequest);
@@ -55,6 +56,15 @@ public class UserServiceTests {
         Assertions.assertNotNull(loginResult.authToken(), "authToken should not be empty");
         Assertions.assertEquals("Tom", loginResult.username(), "username doesn't match");
 
+    }
+
+    @Test
+    public void registerBadRequestTest() {
+        RegisterRequest badRequest = new RegisterRequest("Tom", "password123", null);
+
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
+                () -> userService.register(badRequest));
+        Assertions.assertEquals("Error: bad request", exception.getMessage());
     }
 
     @Test

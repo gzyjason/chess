@@ -60,4 +60,33 @@ public class GameServiceTests {
         Assertions.assertEquals("Error: bad request", exception.getMessage());
         Assertions.assertTrue(gameDAO.listGames().isEmpty(), "No game creation when name is null");
     }
+
+    public void createGameUnauthorized(){
+        CreateGameRequest request = new CreateGameRequest("New Game");
+
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class,
+                () -> gameService.createGame("invalid-token", request));
+
+        Assertions.assertEquals("Error: unauthorized", exception.getMessage());
+    }
+
+    @Test
+    public void listGamesSuccess() throws DataAccessException {
+        RegisterResult reg = userService.register(new RegisterRequest("Tom", "pass", "t@b.edu"));
+        gameService.createGame(reg.authToken(), new CreateGameRequest("Game 1"));
+        gameService.createGame(reg.authToken(), new CreateGameRequest("Game 2"));
+
+        var result = gameService.listGames(reg.authToken());
+
+        Assertions.assertNotNull(result.games());
+        Assertions.assertEquals(2, result.games().size(), "Should return exactly 2 games");
+    }
+
+    @Test
+    public void listGamesUnauthorized() {
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () ->
+                gameService.listGames("fake-token"));
+
+        Assertions.assertEquals("Error: unauthorized", exception.getMessage());
+    }
 }

@@ -61,6 +61,7 @@ public class GameServiceTests {
         Assertions.assertTrue(gameDAO.listGames().isEmpty(), "No game creation when name is null");
     }
 
+    @Test
     public void createGameUnauthorized(){
         CreateGameRequest request = new CreateGameRequest("New Game");
 
@@ -89,4 +90,6 @@ public class GameServiceTests {
 
         Assertions.assertEquals("Error: unauthorized", exception.getMessage());
     }
+
+
 }

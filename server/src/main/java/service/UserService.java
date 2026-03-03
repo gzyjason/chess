@@ -18,14 +18,15 @@ public class UserService {
         this.myAuthDAO = myAuthDAO;
     }
 
+
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        //cannot register if any required fields are missing
-        //the requirements for the course specify that bad request be thrown as exception in this situation, in format used
+        //cannt register if any required fields are missing
+        //the the course requires that bad request be thrown as exception in this situation, in format used
         if (request.username() == null || request.password( ) == null || request.email() == null){
             throw new DataAccessException("Error: bad request");
         }
 
-        if (userDao.retrievePlayer(request.username()) != null) {
+        if (userDao.retrievePlayer(request.username()) !=null) {
             throw new DataAccessException("Error: already taken");
         }
 
@@ -46,6 +47,7 @@ public class UserService {
         UserData user = userDao.retrievePlayer(request.username());
 
         if (user == null) {
+
             throw new DataAccessException("Error: unauthorized");
         }
 
@@ -56,7 +58,7 @@ public class UserService {
         String authToken = UUID.randomUUID().toString();
         myAuthDAO.createToken(new AuthData(authToken, request.username()));
 
-        return new LoginResult(request.username(), authToken);
+        return new LoginResult(request.username( ), authToken);
     }
 
     public void logout(String authToken) throws DataAccessException {

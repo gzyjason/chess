@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AuthDAO {
-    private final Map<String, AuthData> authTokens = new HashMap<>();
+    private final Map<String, AuthData> authTokens = new HashMap<> ();
 
     public void createToken(AuthData auth)  {
         authTokens.put(auth.authToken(), auth);
@@ -13,12 +13,12 @@ public class AuthDAO {
     public AuthData getToken(String authToken) {
         return authTokens.get(authToken);
     }
-
     public void deleteToken(String authToken) {
         authTokens.remove(authToken);
     }
 
-    public void clear() {
+
+    public void  clear() {
         authTokens.clear();
     }
 

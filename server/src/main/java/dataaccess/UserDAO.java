@@ -10,14 +10,14 @@ public class UserDAO {
         if (users.containsKey(user.username())){
             throw new DataAccessException("Username taken");
         }
-        users.put(user.username(), user);
+        users.put(user.username(),user);
     }
 
     public UserData retrievePlayer(String username) {
         return users.get(username);
     }
 
-    public void clear() {
+    public void clear( ) {
         users.clear();
     }
 }

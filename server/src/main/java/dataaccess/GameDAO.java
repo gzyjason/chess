@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameDAO {
-    private final Map<Integer, GameData> games = new HashMap<>();
+    private final Map<Integer,GameData> games = new HashMap<>();
 
     private int newGameId = 1;
 
     public int createGame(GameData game) {
         int gameId = newGameId++;
-        GameData newGame = new GameData(gameId, game.teamAUsername(), game.teamBUsername(), game.gameName(),
+        GameData newGame = new GameData(gameId, game.whiteUsername(), game.blackUsername(), game.gameName(),
                 game.game());
         games.put(gameId, newGame);
         return gameId;
@@ -24,9 +24,9 @@ public class GameDAO {
 
     public void updateGame(GameData game) throws DataAccessException {
         if (!games.containsKey(game.gameID())){
-            throw new DataAccessException("Error: bad request");
+            throw new DataAccessException( "Error: bad request");
         }
-        games.put(game.gameID(), game);
+        games.put(game.gameID(),  game);
     }
 
     public Collection<GameData> listGames() {
@@ -35,6 +35,6 @@ public class GameDAO {
 
     public void clear() {
         games.clear();
-        newGameId = 1;
+        newGameId =1;
     }
 }

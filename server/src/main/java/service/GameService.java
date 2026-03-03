@@ -13,7 +13,6 @@ import java.util.Collection;
 public class GameService {
     private final GameDAO myGameDAO;
     private final AuthDAO myAuthDAO;
-
     public GameService(GameDAO myGameDAO, AuthDAO myAuthDAO){
         this.myGameDAO = myGameDAO;
         this.myAuthDAO = myAuthDAO;
@@ -57,25 +56,24 @@ public class GameService {
         String username = authorized.username();
         String team = request.playerColor();
 
-        if (team != null) {
-            if  (team.equalsIgnoreCase("WHITE")) {
-                if(game.teamAUsername() !=  null) {
-                    throw new DataAccessException("Error: already taken");
-                }
-                game= new GameData(game.gameID(), username, game.teamBUsername(), game.gameName(), game.game());
-            } else if (team.equalsIgnoreCase("BLACK")) {
-                if (game.teamBUsername() != null) {
-
-                    throw new DataAccessException("Error: already taken");
-                }
-
-                game =new GameData(game.gameID(), game.teamAUsername(), username, game.gameName(), game.game());
-            } else {
-                throw new DataAccessException("Error: bad request");
-
-            }
-
-            myGameDAO.updateGame(game);
+        if (team ==  null) {
+            throw new DataAccessException("Error: bad request");
         }
+
+         if  (team.equalsIgnoreCase("WHITE")) {
+            if(game.whiteUsername() !=null) {
+                throw new DataAccessException("Error: already taken");
+            }
+            game = new GameData(game.gameID(),username, game.blackUsername(), game.gameName(), game.game());
+        }else if(team.equalsIgnoreCase("BLACK")) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: already taken");
+            }
+            game = new GameData(game.gameID(), game.whiteUsername(), username,game.gameName(), game.game());
+        } else {
+            throw new DataAccessException("Error: bad request" );
+        }
+
+        myGameDAO.updateGame(game);
     }
 }

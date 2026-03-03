@@ -13,16 +13,14 @@ import results.CreateGameResult;
 import results.RegisterResult;
 
 public class GameServiceTests {
-    private UserDAO userDAO;
-    private AuthDAO authDAO;
     private GameDAO gameDAO;
     private GameService gameService;
     private UserService userService;
 
     @BeforeEach
     public void setup() {
-        userDAO = new UserDAO();
-        authDAO = new AuthDAO();
+        UserDAO userDAO = new UserDAO();
+        AuthDAO authDAO = new AuthDAO();
         gameDAO = new GameDAO();
         gameService = new GameService(gameDAO, authDAO);
         userService = new UserService(userDAO, authDAO);
@@ -100,7 +98,7 @@ public class GameServiceTests {
         gameService.joinGame(registerResult.authToken(), new JoinGameRequest("WHITE", game.gameID()));
 
         GameData savedGame = gameDAO.getGame(game.gameID());
-        Assertions.assertEquals("Tom", savedGame.teamAUsername(), "Tom expected for teamAUsername");
+        Assertions.assertEquals("Tom", savedGame.whiteUsername(), "Tom expected for teamAUsername");
     }
 
     @Test

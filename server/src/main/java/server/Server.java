@@ -17,8 +17,10 @@ public class Server {
     private final ClearService clearService;
 
     public Server() {
+
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
+
             config.jsonMapper(new io.javalin.json.JavalinJackson());
         });
 
@@ -72,12 +74,14 @@ public class Server {
     private void login(Context ctx) throws DataAccessException {
         LoginRequest req = ctx.bodyAsClass(LoginRequest.class);
         LoginResult res = userService.login(req);
+
         ctx.status(200);
         ctx.json(res);
     }
 
     private void logout(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
+
         userService.logout(authToken);
         ctx.status(200);
         ctx.result("{}");
@@ -101,13 +105,19 @@ public class Server {
     private void joinGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
         JoinGameRequest req = ctx.bodyAsClass(JoinGameRequest.class);
+
+        if(req.gameID() <= 0) {
+            throw new DataAccessException("Error: bad request");
+        }
+
         gameService.joinGame(authToken, req);
+
         ctx.status(200);
-        ctx.result("{}");
+        ctx.result("{}" );
     }
 
     public int run(int desiredPort) {
-        javalin.start(desiredPort);
+         javalin.start(desiredPort);
         return javalin.port();
     }
 

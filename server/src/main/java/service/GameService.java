@@ -28,7 +28,8 @@ public class GameService {
             throw  new DataAccessException("Error: bad request");
         }
 
-        int newGame = myGameDAO.createGame(new GameData(0, null, null, request.gameName(), new ChessGame()));
+        int newGame = myGameDAO.createGame(new GameData(0, null, null,
+                request.gameName(),new ChessGame()));
 
         return new CreateGameResult(newGame);
     }
@@ -44,13 +45,12 @@ public class GameService {
 
     public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
         AuthData authorized = myAuthDAO.getToken(authToken);
-        if (authorized == null) {
+        if (authorized == null){
             throw new DataAccessException("Error: unauthorized");
         }
 
         GameData game = myGameDAO.getGame(request.gameID());
         if (game == null) {
-
             throw new DataAccessException("Error: bad request");
         }
 
@@ -58,21 +58,24 @@ public class GameService {
         String team = request.playerColor();
 
         if (team != null) {
-            if (team.equalsIgnoreCase("WHITE")){
-                if (game.teamAUsername() != null) {
+            if  (team.equalsIgnoreCase("WHITE")) {
+                if(game.teamAUsername() !=  null) {
                     throw new DataAccessException("Error: already taken");
                 }
-                game = new GameData(game.gameID(),username, game.teamBUsername(), game.gameName(), game.game());
+                game= new GameData(game.gameID(), username, game.teamBUsername(), game.gameName(), game.game());
             } else if (team.equalsIgnoreCase("BLACK")) {
                 if (game.teamBUsername() != null) {
-                    throw  new DataAccessException("Error: already taken");
-                }
-                game = new GameData(game.gameID(), game.teamAUsername(), username, game.gameName(), game.game());
-            }else{
-                throw new DataAccessException("Error: bad request");
-            }
-        }
 
-            myGameDAO.updateGame( game );
+                    throw new DataAccessException("Error: already taken");
+                }
+
+                game =new GameData(game.gameID(), game.teamAUsername(), username, game.gameName(), game.game());
+            } else {
+                throw new DataAccessException("Error: bad request");
+
+            }
+
+            myGameDAO.updateGame(game);
+        }
     }
 }

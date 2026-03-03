@@ -103,6 +103,10 @@ public class ChessBoard {
         return clone;
     }
 
+    public ChessPiece[][] getSquares() {
+        return squares;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this){

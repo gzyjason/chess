@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
-import io.javalin.json.JavalinJackson;
 import request.*;
 import results.*;
 import service.*;
@@ -42,19 +41,19 @@ public class Server {
         javalin.put("/game", this::joinGame);
 
         javalin.exception(DataAccessException.class, (e, ctx) -> {
-            String message = e.getMessage();
             int statusCode = 500;
+            String message = e.getMessage();
 
             if (message.contains("bad request")) {
                 statusCode = 400;
             } else if (message.contains("unauthorized")) {
                 statusCode = 401;
-            } else if (message.contains("already taken") || message.contains("Username taken")) {
+            } else if (message.contains("already taken") || message.contains("taken")) {
                 statusCode = 403;
             }
 
             ctx.status(statusCode);
-            ctx.json(java.util.Map.of("message", e.getMessage()));
+            ctx.json(Map.of("message", message));
         });
         javalin.exception(DataAccessException.class, (e, ctx) -> {
             int statusCode = switch (e.getMessage()) {
@@ -73,15 +72,11 @@ public class Server {
         ctx.result("{}");
     }
 
-    private void register(Context ctx) {
-        try {
-            RegisterRequest req = ctx.bodyAsClass(RegisterRequest.class);
-            RegisterResult res = userService.register(req);
-            ctx.status(200);
-            ctx.json(res);
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+    private void register(Context ctx) throws DataAccessException { // Change: add throws
+        RegisterRequest req = ctx.bodyAsClass(RegisterRequest.class);
+        RegisterResult res = userService.register(req);
+        ctx.status(200);
+        ctx.json(res);
     }
 
     private void login(Context ctx) throws DataAccessException {

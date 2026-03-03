@@ -60,7 +60,7 @@ public class GameService {
         }
 
         String username = authorized.username();
-        String team = request.teamColor();
+        String team = request.playerColor();
 
 
         if (team != null) {

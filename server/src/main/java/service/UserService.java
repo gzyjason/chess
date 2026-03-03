@@ -40,6 +40,10 @@ public class UserService {
     }
 
     public LoginResult login(LoginRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
         UserData user = userDao.retrievePlayer(request.username());
 
         if (user == null) {

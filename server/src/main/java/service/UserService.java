@@ -25,9 +25,8 @@ public class UserService {
             throw new DataAccessException("Error: bad request");
         }
 
-        //I don't believe that a specific exception is required for this purpose
         if (userDao.retrievePlayer(request.username()) != null) {
-            throw new DataAccessException("Username taken");
+            throw new DataAccessException("Error: already taken");
         }
 
         UserData user = new UserData(request.username(), request.password(), request.email());

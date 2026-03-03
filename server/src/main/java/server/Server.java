@@ -1,6 +1,5 @@
 package server;
 
-import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -41,8 +40,8 @@ public class Server {
         javalin.put("/game", this::joinGame);
 
         javalin.exception(DataAccessException.class, (e, ctx) -> {
-            int statusCode = 500;
             String message = e.getMessage();
+            int statusCode = 500;
 
             if (message.contains("bad request")) {
                 statusCode = 400;
@@ -55,16 +54,7 @@ public class Server {
             ctx.status(statusCode);
             ctx.json(Map.of("message", message));
         });
-        javalin.exception(DataAccessException.class, (e, ctx) -> {
-            int statusCode = switch (e.getMessage()) {
-                case "Error: bad request" -> 400;
-                case "Error: unauthorized" -> 401;
-                case "Error: already taken" -> 403;
-                default -> 500;
-            };
-            ctx.status(statusCode);
-            ctx.result(new Gson().toJson(Map.of("message", e.getMessage())));
-        });
+
     }
     private void clear(Context ctx) {
         clearService.clear();

@@ -8,10 +8,8 @@ import request.CreateGameRequest;
 import request.JoinGameRequest;
 import results.CreateGameResult;
 import results.ListGamesResult;
-
 import java.util.Collection;
 
-//implementation of all game-specific features and functionalities
 public class GameService {
     private final GameDAO myGameDAO;
     private final AuthDAO myAuthDAO;
@@ -21,10 +19,7 @@ public class GameService {
         this.myAuthDAO = myAuthDAO;
     }
 
-    /*"Error: unauthorized" and "Error: bad request" are specifically required exception messages for this project,
-    the tests will fail if other formats are used,
-    but no further exception is required AFAIK
-    */
+
     public CreateGameResult createGame (String authToken, CreateGameRequest request) throws DataAccessException {
         if (myAuthDAO.getToken(authToken) == null){
             throw new DataAccessException("Error: unauthorized");
@@ -49,38 +44,35 @@ public class GameService {
 
     public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
         AuthData authorized = myAuthDAO.getToken(authToken);
-        if(authorized == null) {
+        if (authorized == null) {
             throw new DataAccessException("Error: unauthorized");
-
         }
 
         GameData game = myGameDAO.getGame(request.gameID());
         if (game == null) {
+
             throw new DataAccessException("Error: bad request");
         }
 
         String username = authorized.username();
         String team = request.playerColor();
 
-
         if (team != null) {
-            if(team.equalsIgnoreCase("WHITE")) {
+            if (team.equalsIgnoreCase("WHITE")){
                 if (game.teamAUsername() != null) {
                     throw new DataAccessException("Error: already taken");
-
                 }
-                game = new GameData(game.gameID(), username, game.teamBUsername(), game.gameName(), game.game());
-            }else if (team.equalsIgnoreCase("BLACK")) {
+                game = new GameData(game.gameID(),username, game.teamBUsername(), game.gameName(), game.game());
+            } else if (team.equalsIgnoreCase("BLACK")) {
                 if (game.teamBUsername() != null) {
-                    throw new DataAccessException(("Error: already taken"));
+                    throw  new DataAccessException("Error: already taken");
                 }
-
                 game = new GameData(game.gameID(), game.teamAUsername(), username, game.gameName(), game.game());
-            } else {
-                    throw new DataAccessException("Error: bad request");
+            }else{
+                throw new DataAccessException("Error: bad request");
             }
         }
 
-            myGameDAO.updateGame(game);
+            myGameDAO.updateGame( game );
     }
 }

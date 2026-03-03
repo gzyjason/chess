@@ -24,12 +24,12 @@ public class ClearServiceTests {
 
     @Test
     public void clearDataTest() throws DataAccessException {
-        userDAO.insertUser(new UserData("Tom", "password123", "abc123@byu.edu"));
-        authDAO.createAuth(new AuthData("token123", "Tom"));
+        userDAO.insertPlayer(new UserData("Tom", "password123", "abc123@byu.edu"));
+        authDAO.createToken(new AuthData("token123", "Tom"));
         service.clear();
 
-        Assertions.assertNull(userDAO.getUser("Tom"), "User should be gone");
-        Assertions.assertNull(authDAO.getAuth("token123"), "Auth token should be gone");
+        Assertions.assertNull(userDAO.retrievePlayer("Tom"), "User should be gone");
+        Assertions.assertNull(authDAO.getToken("token123"), "Auth token should be gone");
         Collection<GameData> games = gameDAO.listGames();
         Assertions.assertTrue(games.isEmpty(), "Game list should be empty");
 

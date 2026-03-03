@@ -6,14 +6,14 @@ import java.util.Map;
 public class UserDAO {
     private final Map<String, UserData> users = new HashMap<>();
 
-    public void insertUser(UserData user) throws DataAccessException {
+    public void insertPlayer(UserData user) throws DataAccessException {
         if (users.containsKey(user.username())){
             throw new DataAccessException("Username taken");
         }
         users.put(user.username(), user);
     }
 
-    public UserData getUser(String username) {
+    public UserData retrievePlayer(String username) {
         return users.get(username);
     }
 

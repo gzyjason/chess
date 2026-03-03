@@ -7,6 +7,7 @@ import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 import request.CreateGameRequest;
+import request.JoinGameRequest;
 import request.RegisterRequest;
 import results.CreateGameResult;
 import results.RegisterResult;
@@ -91,5 +92,34 @@ public class GameServiceTests {
         Assertions.assertEquals("Error: unauthorized", exception.getMessage());
     }
 
+    @Test
+    public void joinGameSuccess() throws DataAccessException {
+        RegisterResult registerResult = userService.register(new RegisterRequest("Tom", "password123", "abc123@byu.edu"));
+        CreateGameResult game = gameService.createGame(registerResult.authToken(), new CreateGameRequest("Test Game"));
+
+        gameService.joinGame(registerResult.authToken(), new JoinGameRequest("WHITE", game.gameID()));
+
+        GameData savedGame = gameDAO.getGame(game.gameID());
+        Assertions.assertEquals("Tom", savedGame.teamAUsername(), "Tom expected for teamAUsername");
+    }
+
+    @Test
+    @DisplayName("Negative: Join color that is already taken")
+    public void joinGameAlreadyTaken() throws DataAccessException {
+
+        RegisterResult player1Result = userService.register(new RegisterRequest("P1", "pass",
+                "1@b.edu"));
+        RegisterResult player2Result = userService.register(new RegisterRequest("P2", "pass",
+                "2@b.edu"));
+        CreateGameResult game = gameService.createGame(player1Result.authToken(),
+                new CreateGameRequest("Test Game"));
+
+        gameService.joinGame(player1Result.authToken(), new JoinGameRequest("BLACK", game.gameID()));
+
+        DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () ->
+                gameService.joinGame(player2Result.authToken(), new JoinGameRequest("BLACK", game.gameID())));
+
+        Assertions.assertEquals("Error: already taken", exception.getMessage()); //
+    }
 
 }

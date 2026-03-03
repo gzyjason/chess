@@ -8,50 +8,59 @@ import results.LoginResult;
 import results.RegisterResult;
 import java.util.UUID;
 
-public class UserService {
-    private final UserDAO userDAO;
-    private final AuthDAO authDAO;
 
-    public UserService(UserDAO userDAO, AuthDAO authDAO) {
-        this.userDAO = userDAO;
-        this.authDAO = authDAO;
+public class UserService {
+    private final UserDAO userDao;
+    private final AuthDAO myAuthDAO;
+
+    public UserService(UserDAO userDao, AuthDAO myAuthDAO) {
+        this.userDao = userDao;
+        this.myAuthDAO = myAuthDAO;
     }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        if (request.username() == null || request.password() == null || request.email() == null){
+        //cannot register if any required fields are missing
+        //the requirements for the course specify that bad request be thrown as exception in this situation, in format used
+        if (request.username() == null || request.password( ) == null || request.email() == null){
             throw new DataAccessException("Error: bad request");
         }
-        if (userDAO.getUser(request.username()) != null) {
+
+        //I don't believe that a specific exception is required for this purpose
+        if (userDao.retrievePlayer(request.username()) != null) {
             throw new DataAccessException("Username taken");
         }
 
         UserData user = new UserData(request.username(), request.password(), request.email());
-        userDAO.insertUser(user);
+        userDao.insertPlayer(user);
 
         String authToken = UUID.randomUUID().toString();
-        authDAO.createAuth(new AuthData(authToken, request.username()));
+        myAuthDAO.createToken(new AuthData(authToken, request.username()));
 
         return new RegisterResult(request.username(), authToken);
     }
 
     public LoginResult login(LoginRequest request) throws DataAccessException {
-        UserData user = userDAO.getUser(request.username());
+        UserData user = userDao.retrievePlayer(request.username());
 
-        if(user == null || !user.password().equals(request.password())){
+        if (user == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        if (!user.password().equals(request.password())) {
             throw new DataAccessException("Error: unauthorized");
         }
 
         String authToken = UUID.randomUUID().toString();
-        authDAO.createAuth(new AuthData(authToken, request.username()));
+        myAuthDAO.createToken(new AuthData(authToken, request.username()));
 
         return new LoginResult(request.username(), authToken);
     }
 
     public void logout(String authToken) throws DataAccessException {
-        if (authDAO.getAuth(authToken) == null) {
+        if (myAuthDAO.getToken(authToken) == null) {
             throw new DataAccessException("Error: unauthorized");
         }
 
-        authDAO.deleteAuth(authToken);
+        myAuthDAO.deleteToken(authToken);
     }
 }

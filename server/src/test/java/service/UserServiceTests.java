@@ -30,7 +30,7 @@ public class UserServiceTests {
         RegisterResult result = userService.register(request);
         Assertions.assertNotNull(result.authToken(), "Service should return an authToken");
         Assertions.assertEquals("Tom", result.username());
-        Assertions.assertNotNull(userDAO.getUser("Tom"), "User should be saved in UserDAO");
+        Assertions.assertNotNull(userDAO.retrievePlayer("Tom"), "User should be saved in UserDAO");
     }
 
     @Test
@@ -85,7 +85,7 @@ public class UserServiceTests {
 
         userService.logout(registerResult.authToken());
 
-        Assertions.assertNull(authDAO.getAuth(registerResult.authToken()));
+        Assertions.assertNull(authDAO.getToken(registerResult.authToken()));
     }
 
     @Test

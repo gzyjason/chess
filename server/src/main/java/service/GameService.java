@@ -2,41 +2,85 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.*;
+import model.AuthData;
 import model.GameData;
 import request.CreateGameRequest;
+import request.JoinGameRequest;
 import results.CreateGameResult;
 import results.ListGamesResult;
 
 import java.util.Collection;
 
+//implementation of all game-specific features and functionalities
 public class GameService {
-    private final GameDAO gameDAO;
-    private final AuthDAO authDAO;
+    private final GameDAO myGameDAO;
+    private final AuthDAO myAuthDAO;
 
-    public GameService(GameDAO gameDAO, AuthDAO authDAO){
-        this.gameDAO = gameDAO;
-        this.authDAO = authDAO;
+    public GameService(GameDAO myGameDAO, AuthDAO myAuthDAO){
+        this.myGameDAO = myGameDAO;
+        this.myAuthDAO = myAuthDAO;
     }
+
+    /*"Error: unauthorized" and "Error: bad request" are specifically required exception messages for this project,
+    the tests will fail if other formats are used,
+    but no further exception is required AFAIK
+    */
     public CreateGameResult createGame (String authToken, CreateGameRequest request) throws DataAccessException {
-        if (authDAO.getAuth(authToken) == null){
+        if (myAuthDAO.getToken(authToken) == null){
             throw new DataAccessException("Error: unauthorized");
         }
-
         if (request.gameName() == null || request.gameName().isEmpty()) {
             throw  new DataAccessException("Error: bad request");
         }
 
-        int newGame = gameDAO.createGame(new GameData(0, null, null, request.gameName(), new ChessGame()));
+        int newGame = myGameDAO.createGame(new GameData(0, null, null, request.gameName(), new ChessGame()));
 
         return new CreateGameResult(newGame);
     }
 
-    public ListGamesResult listGames (String authToken) throws DataAccessException {
-        if (authDAO.getAuth(authToken) == null){
+   public ListGamesResult listGames (String authToken) throws DataAccessException {
+        if (myAuthDAO.getToken(authToken)  == null){
             throw new DataAccessException("Error: unauthorized");
         }
 
-        Collection<GameData> games = gameDAO.listGames();
+        Collection<GameData> games = myGameDAO.listGames();
         return new ListGamesResult(games);
+    }
+
+    public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
+        AuthData authorized = myAuthDAO.getToken(authToken);
+        if(authorized == null) {
+            throw new DataAccessException("Error: unauthorized");
+
+        }
+
+        GameData game = myGameDAO.getGame(request.gameID());
+        if (game == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        String username = authorized.username();
+        String team = request.teamColor();
+
+
+        if (team != null) {
+            if(team.equalsIgnoreCase("WHITE")) {
+                if (game.teamAUsername() != null) {
+                    throw new DataAccessException("Error: already taken");
+
+                }
+                game = new GameData(game.gameID(), username, game.teamBUsername(), game.gameName(), game.game());
+            }else if (team.equalsIgnoreCase("BLACK")) {
+                if (game.teamBUsername() != null) {
+                    throw new DataAccessException(("Error: already taken"));
+                }
+
+                game = new GameData(game.gameID(), game.teamAUsername(), username, game.gameName(), game.game());
+            } else {
+                    throw new DataAccessException("Error: bad request");
+            }
+        }
+
+            myGameDAO.updateGame(game);
     }
 }

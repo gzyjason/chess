@@ -24,7 +24,7 @@ public class GameDAO {
 
     public void updateGame(GameData game) throws DataAccessException {
         if (!games.containsKey(game.gameID())){
-            throw new DataAccessException("Game not found");
+            throw new DataAccessException("Error: bad request");
         }
         games.put(game.gameID(), game);
     }

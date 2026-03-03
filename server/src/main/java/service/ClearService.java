@@ -2,20 +2,22 @@ package service;
 
 import dataaccess.*;
 
+//basic class used for clearing all stored information before starting new game
+//all other services and DAOs rely on this class
 public class ClearService {
-    private final UserDAO userDAO;
-    private final AuthDAO authDAO;
-    private final GameDAO gameDAO;
+    private final UserDAO userDao;
+    private final AuthDAO myAuthDAO;
+    private final GameDAO myGameDAO;
 
-    public ClearService(UserDAO userDAO, AuthDAO authDAO, GameDAO gameDAO){
-        this.userDAO = userDAO;
-        this.authDAO = authDAO;
-        this.gameDAO = gameDAO;
+    public ClearService(UserDAO userDao, AuthDAO myAuthDAO, GameDAO myGameDAO){
+        this.userDao = userDao;
+        this.myAuthDAO = myAuthDAO;
+        this.myGameDAO = myGameDAO;
     }
 
     public void clear() {
-        userDAO.clear();
-        authDAO.clear();
-        gameDAO.clear();
+        userDao.clear();
+        myAuthDAO.clear();
+        myGameDAO.clear();
     }
 }

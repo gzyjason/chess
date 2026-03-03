@@ -1,5 +1,6 @@
 package server;
 
+import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -15,14 +16,11 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
     private final ClearService clearService;
+    private final Gson gson = new Gson();
 
     public Server() {
 
-        javalin = Javalin.create(config -> {
-            config.staticFiles.add("web");
-
-            config.jsonMapper(new io.javalin.json.JavalinJackson());
-        });
+        javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         UserDAO userDao = new UserDAO();
         AuthDAO authDao = new AuthDAO();
@@ -32,7 +30,6 @@ public class Server {
         this.gameService = new GameService(gameDao, authDao);
         this.clearService = new ClearService(userDao, authDao, gameDao);
 
-        // Register your endpoints and exception handlers here.
         javalin.delete("/db", this::clear);
         javalin.post("/user", this::register);
         javalin.post("/session", this::login);
@@ -45,38 +42,43 @@ public class Server {
             String message = e.getMessage();
             int statusCode = 500;
 
-            if (message.contains("bad request")) {
-                statusCode = 400;
-            } else if (message.contains("unauthorized")) {
-                statusCode = 401;
-            } else if (message.contains("already taken") || message.contains("taken")) {
-                statusCode = 403;
+            if (message != null) {
+                if (message.contains("bad request")) {
+                    statusCode = 400;
+                } else if (message.contains("unauthorized")) {
+                    statusCode = 401;
+                } else if (message.contains("already taken") || message.contains("taken")) {
+                    statusCode = 403;
+                }
             }
 
             ctx.status(statusCode);
-            ctx.json(Map.of("message", message));
+            ctx.result(gson.toJson(Map.of("message", message != null ? message : "Error: internal server error")));
         });
-
     }
+
     private void clear(Context ctx) {
         clearService.clear();
         ctx.status(200);
         ctx.result("{}");
     }
 
-    private void register(Context ctx) throws DataAccessException { // Change: add throws
-        RegisterRequest req = ctx.bodyAsClass(RegisterRequest.class);
+    private void register(Context ctx) throws DataAccessException {
+        RegisterRequest req = gson.fromJson(ctx.body(), RegisterRequest.class);
+        if (req == null) throw new DataAccessException("Error: bad request");
+
         RegisterResult res = userService.register(req);
         ctx.status(200);
-        ctx.json(res);
+        ctx.result(gson.toJson(res));
     }
 
     private void login(Context ctx) throws DataAccessException {
-        LoginRequest req = ctx.bodyAsClass(LoginRequest.class);
-        LoginResult res = userService.login(req);
+        LoginRequest req = gson.fromJson(ctx.body(), LoginRequest.class);
+        if (req == null) throw new DataAccessException("Error: bad request");
 
+        LoginResult res = userService.login(req);
         ctx.status(200);
-        ctx.json(res);
+        ctx.result(gson.toJson(res));
     }
 
     private void logout(Context ctx) throws DataAccessException {
@@ -91,33 +93,35 @@ public class Server {
         String authToken = ctx.header("authorization");
         ListGamesResult res = gameService.listGames(authToken);
         ctx.status(200);
-        ctx.json(res);
+        ctx.result(gson.toJson(res));
     }
 
     private void createGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
-        CreateGameRequest req = ctx.bodyAsClass(CreateGameRequest.class);
+        CreateGameRequest req = gson.fromJson(ctx.body(), CreateGameRequest.class);
+        if (req == null) throw new DataAccessException("Error: bad request");
+
         CreateGameResult res = gameService.createGame(authToken, req);
         ctx.status(200);
-        ctx.json(res);
+        ctx.result(gson.toJson(res));
     }
 
     private void joinGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
-        JoinGameRequest req = ctx.bodyAsClass(JoinGameRequest.class);
+        JoinGameRequest req = gson.fromJson(ctx.body(), JoinGameRequest.class);
 
-        if(req.gameID() <= 0) {
+        if(req == null || req.gameID() <= 0) {
             throw new DataAccessException("Error: bad request");
         }
 
         gameService.joinGame(authToken, req);
 
         ctx.status(200);
-        ctx.result("{}" );
+        ctx.result("{}");
     }
 
     public int run(int desiredPort) {
-         javalin.start(desiredPort);
+        javalin.start(desiredPort);
         return javalin.port();
     }
 

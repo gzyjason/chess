@@ -115,21 +115,30 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessBoard board = getBoard();
-        ChessPiece opponentPiece;
+        ChessPosition kingPos = getKingPosition(teamColor);
+
         for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-                if (piece != null && piece.getTeamColor() != teamColor) {
-                    opponentPiece = piece;
-                    Collection<ChessMove> opponentMoves = opponentPiece.pieceMoves(board, position);
-                    for (ChessMove move : opponentMoves) {
-                        ChessPosition endPosition = move.endPosition();
-                        if (endPosition.equals(getKingPosition(teamColor))) {
-                            return true;
-                        }
-                    }
+            for(int col = 1; col <= 8; col++) {
+                ChessPosition position =  new ChessPosition(row,col);
+                if(doesSquareThreatenKing(position, teamColor, kingPos)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean doesSquareThreatenKing(ChessPosition position, TeamColor teamColor, ChessPosition kingPos) {
+        ChessBoard board = getBoard( );
+        ChessPiece piece = board.getPiece(position);
+
+        if (piece != null && piece.getTeamColor() !=teamColor) {
+
+            Collection<ChessMove> opponentMoves = piece.pieceMoves(board, position);
+            for (ChessMove move : opponentMoves) {
+                if (move.endPosition().equals(kingPos)) {
+                    return true;
+
                 }
             }
         }

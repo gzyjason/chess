@@ -65,7 +65,9 @@ public class Server {
 
     private void register(Context ctx) throws DataAccessException {
         RegisterRequest req = gson.fromJson(ctx.body(), RegisterRequest.class);
-        if (req == null) throw new DataAccessException("Error: bad request");
+        if (req == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         RegisterResult res = userService.register(req);
         ctx.status(200);
@@ -74,7 +76,9 @@ public class Server {
 
     private void login(Context ctx) throws DataAccessException {
         LoginRequest req = gson.fromJson(ctx.body(), LoginRequest.class);
-        if (req == null) throw new DataAccessException("Error: bad request");
+        if (req == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         LoginResult res = userService.login(req);
         ctx.status(200);
@@ -99,7 +103,9 @@ public class Server {
     private void createGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
         CreateGameRequest req = gson.fromJson(ctx.body(), CreateGameRequest.class);
-        if (req == null) throw new DataAccessException("Error: bad request");
+        if (req == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         CreateGameResult res = gameService.createGame(authToken, req);
         ctx.status(200);

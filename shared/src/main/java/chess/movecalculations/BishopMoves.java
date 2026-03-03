@@ -1,4 +1,4 @@
-package chess.MoveCalculations;
+package chess.movecalculations;
 
 import chess.ChessBoard;
 import chess.ChessMove;
@@ -18,7 +18,7 @@ public class BishopMoves {
     }
 
     static Collection<ChessMove> getChessMoves(ChessBoard board, ChessPosition pst, OverallMoves helper, int[] rowDir, int[] colDir) {
-        ArrayList<ChessPosition> target = helper.BoardEdge(board, pst, rowDir, colDir);
+        ArrayList<ChessPosition> target = helper.boardEdge(board, pst, rowDir, colDir);
         ArrayList<ChessMove> legal = new ArrayList<>();
         for (ChessPosition end : target) {
             legal.add(new ChessMove(pst, end, null));

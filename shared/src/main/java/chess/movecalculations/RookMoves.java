@@ -1,4 +1,4 @@
-package chess.MoveCalculations;
+package chess.movecalculations;
 
 import chess.ChessBoard;
 import chess.ChessMove;
@@ -6,7 +6,7 @@ import chess.ChessPosition;
 
 import java.util.Collection;
 
-import static chess.MoveCalculations.BishopMoves.getChessMoves;
+import static chess.movecalculations.BishopMoves.getChessMoves;
 
 public class RookMoves {
     public Collection<ChessMove> getMoves(ChessBoard board, ChessPosition myPosition) {

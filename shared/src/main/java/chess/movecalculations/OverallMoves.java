@@ -1,4 +1,4 @@
-package chess.MoveCalculations;
+package chess.movecalculations;
 
 import chess.ChessBoard;
 import chess.ChessGame;
@@ -8,7 +8,7 @@ import chess.ChessPosition;
 import java.util.ArrayList;
 
 public class OverallMoves {
-    public ArrayList<ChessPosition> BoardEdge(ChessBoard board, ChessPosition myPosition, int[] row, int[]col){
+    public ArrayList<ChessPosition> boardEdge(ChessBoard board, ChessPosition myPosition, int[] row, int[]col){
 
         ArrayList<ChessPosition> moves = new ArrayList<>();
 

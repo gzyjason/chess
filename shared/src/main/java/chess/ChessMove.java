@@ -10,12 +10,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ChessMove(ChessPosition startPosition, ChessPosition endPosition, ChessPiece.PieceType promotionPiece) {
 
+    public ChessPosition getStartPosition() {
+        return startPosition;
+    }
+
+    public ChessPosition getEndPosition() {
+        return endPosition;
+    }
+
+    public ChessPiece.PieceType getPromotionPiece() {
+        return promotionPiece;
+    }
+
     /**
      * @return ChessPosition of starting location
      */
+
     @Override
     @NotNull
     public ChessPosition startPosition() {
+
         return startPosition;
     }
 
@@ -35,14 +49,14 @@ public record ChessMove(ChessPosition startPosition, ChessPosition endPosition, 
      * @return Type of piece to promote a pawn to, or null if no promotion
      */
     @Override
-    public ChessPiece.PieceType promotionPiece() {
+    public ChessPiece.PieceType promotionPiece( ) {
         return promotionPiece;
     }
 
     @NotNull
     @Override
-    public String toString() {
-        return String.format("%s%s", startPosition, endPosition);
+    public String toString( ) {
+        return String.format( "%s%s", startPosition, endPosition);
     }
 
     @Override

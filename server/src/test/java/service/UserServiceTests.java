@@ -1,8 +1,8 @@
 package service;
 
-import dataaccess.AuthDAO;
+import dataaccess.MemoryAuthDAO;
 import dataaccess.DataAccessException;
-import dataaccess.UserDAO;
+import dataaccess.MemoryUserDAO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,14 +12,14 @@ import results.LoginResult;
 import results.RegisterResult;
 
 public class UserServiceTests {
-    private UserDAO userDAO;
-    private AuthDAO authDAO;
+    private MemoryUserDAO userDAO;
+    private MemoryAuthDAO authDAO;
     private UserService userService;
 
     @BeforeEach
     public void setup(){
-        this.userDAO = new UserDAO();
-        this.authDAO = new AuthDAO();
+        this.userDAO = new MemoryUserDAO();
+        this.authDAO = new MemoryAuthDAO();
         this.userService = new UserService(userDAO, authDAO);
     }
 

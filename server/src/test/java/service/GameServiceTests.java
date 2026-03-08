@@ -3,9 +3,9 @@ package service;
 import dataaccess.DataAccessException;
 import model.GameData;
 import org.junit.jupiter.api.*;
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
+import dataaccess.MemoryAuthDAO;
+import dataaccess.MemoryGameDAO;
+import dataaccess.MemoryUserDAO;
 import request.CreateGameRequest;
 import request.JoinGameRequest;
 import request.RegisterRequest;
@@ -13,15 +13,15 @@ import results.CreateGameResult;
 import results.RegisterResult;
 
 public class GameServiceTests {
-    private GameDAO gameDAO;
+    private MemoryGameDAO gameDAO;
     private GameService gameService;
     private UserService userService;
 
     @BeforeEach
     public void setup() {
-        UserDAO userDAO = new UserDAO();
-        AuthDAO authDAO = new AuthDAO();
-        gameDAO = new GameDAO();
+        MemoryUserDAO userDAO = new MemoryUserDAO();
+        MemoryAuthDAO authDAO = new MemoryAuthDAO();
+        gameDAO = new MemoryGameDAO();
         gameService = new GameService(gameDAO, authDAO);
         userService = new UserService(userDAO, authDAO);
     }

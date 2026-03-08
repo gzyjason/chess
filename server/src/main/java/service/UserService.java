@@ -10,10 +10,10 @@ import java.util.UUID;
 
 
 public class UserService {
-    private final UserDAO userDao;
-    private final AuthDAO myAuthDAO;
+    private final MemoryUserDAO userDao;
+    private final MemoryAuthDAO myAuthDAO;
 
-    public UserService(UserDAO userDao, AuthDAO myAuthDAO) {
+    public UserService(MemoryUserDAO userDao, MemoryAuthDAO myAuthDAO) {
         this.userDao = userDao;
         this.myAuthDAO = myAuthDAO;
     }

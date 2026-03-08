@@ -22,9 +22,9 @@ public class Server {
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
-        UserDAO userDao = new UserDAO();
-        AuthDAO authDao = new AuthDAO();
-        GameDAO gameDao = new GameDAO();
+        MemoryUserDAO userDao = new MemoryUserDAO();
+        MemoryAuthDAO authDao = new MemoryAuthDAO();
+        MemoryGameDAO gameDao = new MemoryGameDAO();
 
         this.userService = new UserService(userDao, authDao);
         this.gameService = new GameService(gameDao, authDao);

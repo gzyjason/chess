@@ -9,6 +9,7 @@ public class DatabaseManager {
     private static String dbPassword;
     private static String connectionUrl;
 
+
     /*
      * Load the database information for the db.properties file.
      */
@@ -74,4 +75,6 @@ public class DatabaseManager {
         var port = Integer.parseInt(props.getProperty("db.port"));
         connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
     }
+
+
 }

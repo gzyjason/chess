@@ -127,6 +127,15 @@ public class Server {
     }
 
     public int run(int desiredPort) {
+        try {
+            DatabaseManager.createDatabase();
+
+            new SqlAuthDAO();
+            new SqlUserDAO();
+            new SqlGameDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
         javalin.start(desiredPort);
         return javalin.port();
     }

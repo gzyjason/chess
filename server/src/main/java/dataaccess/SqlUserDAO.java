@@ -24,15 +24,51 @@ public class SqlUserDAO implements UserDAO{
 
     @Override
     public void insertPlayer(UserData user) throws DataAccessException{
+        String statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
+        try (var openConnection = DatabaseManager.getConnection( );
+             var getReady = openConnection.prepareStatement(statement)){
+            getReady.setString(1, user.username());
+            getReady.setString(2, user.password());
+            getReady.setString(3,user.email());
+            getReady.executeUpdate();
+        } catch (SQLException exception) {
+            throw new DataAccessException(String.format("Error inserting player: %s", exception.getMessage()), exception);
+        }
 
     }
     @Override
     public UserData retrievePlayer(String username) throws DataAccessException {
+        String statement = "SELECT username, password, email FROM user WHERE username =?";
+        try (var openConnection = DatabaseManager.getConnection();
+             var getReady = openConnection.prepareStatement(statement)) {
+
+            getReady.setString(1, username);
+
+            try (var results = getReady.executeQuery()) {
+                if (results.next()) {
+                    String returnedUsername = results.getString("username");
+                    String returnedPassword = results.getString("password");
+                    String returnedEmail = results.getString("email");
+
+                    return new UserData(returnedUsername, returnedPassword, returnedEmail);
+                }
+            }
+
+        } catch (SQLException exception) {
+            throw new DataAccessException(String.format("Error retrieving player: %s", exception.getMessage()), exception);
+        }
         return null;
     }
 
     @Override
     public void clear() throws DataAccessException {
+        String statement = "TRUNCATE TABLE user";
+        try (var openConnection = DatabaseManager.getConnection();
+             var getReady = openConnection.prepareStatement(statement)) {
+            getReady.executeUpdate();
+        } catch (SQLException exception){
+            throw new DataAccessException(String.format("Error clearing player: %s", exception.getMessage()), exception);
+        }
 
     }
 

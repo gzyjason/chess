@@ -17,7 +17,7 @@ public class SqlGameDAO implements GameDAO{
                     whiteUsername VARCHAR(255),
                     blackUsername VARCHAR(255),
                     gameName VARCHAR(255) NOT NULL,
-                    game TEXT NOT NULL,
+                    json TEXT NOT NULL,
                     PRIMARY KEY (gameID)
                 )
                 """;
@@ -30,7 +30,7 @@ public class SqlGameDAO implements GameDAO{
     }
     @Override
     public int createGame(GameData game) throws DataAccessException {
-        String statement = "INSERT INTO game (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
+        String statement = "INSERT INTO json (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
         String serializedGame = serializer.toJson(game.game());
         try (var openConnection = DatabaseManager.getConnection( );
              var getReady = openConnection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
@@ -55,7 +55,7 @@ public class SqlGameDAO implements GameDAO{
 
     @Override
     public GameData getGame(int gameId) throws DataAccessException {
-        String statement = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM game WHERE gameID = ?";
+        String statement = "SELECT gameID, whiteUsername, blackUsername, gameName, json FROM game WHERE gameID = ?";
         try (var openConnection = DatabaseManager.getConnection();
              var getReady = openConnection.prepareStatement(statement)) {
             getReady.setInt(1, gameId);
@@ -64,7 +64,7 @@ public class SqlGameDAO implements GameDAO{
                     String returnedWhiteUsername = results.getString("whiteUsername");
                     String returnedBlackUsername = results.getString("blackUsername");
                     String returnedGameName = results.getString("gameName");
-                    String returnedGameString = results.getString("game");
+                    String returnedGameString = results.getString("json");
                     ChessGame parsedGame = serializer.fromJson(returnedGameString, ChessGame.class);
 
                     return new GameData(gameId, returnedWhiteUsername, returnedBlackUsername, returnedGameName, parsedGame);
@@ -79,7 +79,7 @@ public class SqlGameDAO implements GameDAO{
 
     @Override
     public void updateGame(GameData game) throws DataAccessException {
-        String statement = "UPDATE game SET whiteUsername = ?, blackUsername = ?, gameName = ?, game = ? WHERE gameID = ?";
+        String statement = "UPDATE game SET whiteUsername = ?, blackUsername = ?, gameName = ?, json = ? WHERE gameID = ?";
         String serializedGame = serializer.toJson(game.game());
         try (var openConnection = DatabaseManager.getConnection();
              var getReady = openConnection.prepareStatement(statement)) {
@@ -103,7 +103,7 @@ public class SqlGameDAO implements GameDAO{
 
     @Override
     public Collection<GameData> listGames() throws DataAccessException {
-        String statement ="SELECT gameID, whiteUsername, blackUsername, gameName, game FROM game";
+        String statement ="SELECT gameID, whiteUsername, blackUsername, gameName, json FROM game";
         Collection<GameData> gamesList = new ArrayList<>();
         try (var openConnection = DatabaseManager.getConnection();
              var getReady = openConnection.prepareStatement(statement)) {
@@ -113,7 +113,7 @@ public class SqlGameDAO implements GameDAO{
                     String returnedWhiteUsername = results.getString("whiteUsername");
                     String returnedBlackUsername = results.getString("blackUsername");
                     String returnedGameName = results.getString("gameName");
-                    String returnedGameString = results.getString("game");
+                    String returnedGameString = results.getString("json");
                     ChessGame parsedGame = serializer.fromJson(returnedGameString, ChessGame.class);
                     GameData game = new GameData(returnedGameId, returnedWhiteUsername, returnedBlackUsername, returnedGameName,parsedGame);
                     gamesList.add(game);

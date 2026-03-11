@@ -18,7 +18,7 @@ public class SqlUserDAO implements UserDAO{
              var preparedStatement = conn.prepareStatement(createTable)) {
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", e.getMessage()), e);
+            throw new DataAccessException(String.format("Error: unable to configure database: %s", e.getMessage()), e);
         }
     }
 
@@ -33,7 +33,7 @@ public class SqlUserDAO implements UserDAO{
             getReady.setString(3,user.email());
             getReady.executeUpdate();
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error inserting player: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to player: %s", exception.getMessage()), exception);
         }
 
     }
@@ -56,7 +56,7 @@ public class SqlUserDAO implements UserDAO{
             }
 
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error retrieving player: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to retrieve player: %s", exception.getMessage()), exception);
         }
         return null;
     }
@@ -68,7 +68,7 @@ public class SqlUserDAO implements UserDAO{
              var getReady = openConnection.prepareStatement(statement)) {
             getReady.executeUpdate();
         } catch (SQLException exception){
-            throw new DataAccessException(String.format("Error clearing player: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to clear player: %s", exception.getMessage()), exception);
         }
 
     }

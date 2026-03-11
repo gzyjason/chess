@@ -15,14 +15,11 @@ public class ClearService {
         this.myGameDAO = myGameDAO;
     }
 
-    public void clear( ) throws DataAccessException {
-        try {
-            userDao.clear( );
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+    public void clear() throws DataAccessException { // Add the 'throws' here
+        userDao.clear();
         myAuthDAO.clear();
         myGameDAO.clear();
-
     }
+
 }
+

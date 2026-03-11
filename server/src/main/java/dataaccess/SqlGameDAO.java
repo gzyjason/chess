@@ -25,7 +25,7 @@ public class SqlGameDAO implements GameDAO{
              var preparedStatement = conn.prepareStatement(createTable)) {
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", e.getMessage()), e);
+            throw new DataAccessException(String.format("Error: failed to configure database: %s", e.getMessage()), e);
         }
     }
     @Override
@@ -48,7 +48,7 @@ public class SqlGameDAO implements GameDAO{
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error creating game: %s",exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to create game: %s",exception.getMessage()), exception);
         }
     }
 
@@ -73,7 +73,7 @@ public class SqlGameDAO implements GameDAO{
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error getting game: %s",exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to get game: %s",exception.getMessage()), exception);
         }
     }
 
@@ -96,7 +96,7 @@ public class SqlGameDAO implements GameDAO{
 
             getReady.executeUpdate();
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error updating game: %s",exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to update game: %s",exception.getMessage()), exception);
         }
     }
 
@@ -120,7 +120,7 @@ public class SqlGameDAO implements GameDAO{
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error listing game: %s",exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to list game: %s",exception.getMessage()), exception);
         }
         return gamesList;
 
@@ -132,7 +132,7 @@ public class SqlGameDAO implements GameDAO{
              var getReady = openConnection.prepareStatement(statement)) {
             getReady.executeUpdate();
         } catch (SQLException exception){
-            throw new DataAccessException(String.format("Error clearing game: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to clear game: %s", exception.getMessage()), exception);
         }
 
     }

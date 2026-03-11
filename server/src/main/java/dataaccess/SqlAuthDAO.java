@@ -16,7 +16,7 @@ public class SqlAuthDAO implements AuthDAO{
              var preparedStatement = conn.prepareStatement(createTable)) {
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", e.getMessage()), e);
+            throw new DataAccessException(String.format("Error: Unable to configure database: %s", e.getMessage()), e);
         }
     }
     @Override
@@ -29,7 +29,7 @@ public class SqlAuthDAO implements AuthDAO{
 
             getReady.executeUpdate();
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error creating token: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to create token: %s", exception.getMessage()), exception);
         }
     }
 
@@ -51,7 +51,7 @@ public class SqlAuthDAO implements AuthDAO{
             }
 
         } catch (SQLException exception) {
-            throw new DataAccessException(String.format("Error retrieving token: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to retrieve token: %s", exception.getMessage()), exception);
         }
         return null;
     }
@@ -64,7 +64,7 @@ public class SqlAuthDAO implements AuthDAO{
             getReady.setString(1, authToken);
             getReady.executeUpdate();
         } catch (SQLException exception){
-            throw new DataAccessException(String.format("Error deleting token: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to delete token: %s", exception.getMessage()), exception);
         }
     }
 
@@ -75,7 +75,7 @@ public class SqlAuthDAO implements AuthDAO{
              var getReady = openConnection.prepareStatement(statement)) {
             getReady.executeUpdate();
         } catch (SQLException exception){
-            throw new DataAccessException(String.format("Error clearing token: %s", exception.getMessage()), exception);
+            throw new DataAccessException(String.format("Error: failed to clear token: %s", exception.getMessage()), exception);
         }
 
     }

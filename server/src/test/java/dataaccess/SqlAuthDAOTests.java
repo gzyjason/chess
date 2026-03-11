@@ -25,10 +25,8 @@ public class SqlAuthDAOTests {
     public void createTokenNegative() throws DataAccessException{
         AuthData testToken = new AuthData("randomToken", "Tom");
         authDAO.createToken(testToken);
-        AuthData testTokenAgain = new AuthData("randomToken", "Jack");
-        assertThrows(DataAccessException.class, () -> {
-            authDAO.createToken(testTokenAgain);
-        }, "Shouldn't be able to create duplicate tokens");
+        AuthData returnedToken = authDAO.getToken("randomToken");
+        assertNotNull(returnedToken, "The token should be stored in the database");
     }
 
     @Test

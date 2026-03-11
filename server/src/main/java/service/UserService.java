@@ -10,17 +10,17 @@ import java.util.UUID;
 
 
 public class UserService {
-    private final MemoryUserDAO userDao;
-    private final MemoryAuthDAO myAuthDAO;
+    private final UserDAO userDao;
+    private final AuthDAO myAuthDAO;
 
-    public UserService(MemoryUserDAO userDao, MemoryAuthDAO myAuthDAO) {
+    public UserService(UserDAO userDao, AuthDAO myAuthDAO) {
         this.userDao = userDao;
         this.myAuthDAO = myAuthDAO;
     }
 
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        //cannt register if any required fields are missing
+        //cant register if any required fields are missing
         //the the course requires that bad request be thrown as exception in this situation, in format used
         if (request.username() == null || request.password( ) == null || request.email() == null){
             throw new DataAccessException("Error: bad request");
@@ -51,7 +51,7 @@ public class UserService {
             throw new DataAccessException("Error: unauthorized");
         }
 
-        if (!user.password().equals(request.password())) {
+        if (!org.mindrot.jbcrypt.BCrypt.checkpw(request.password(), user.password())) {
             throw new DataAccessException("Error: unauthorized");
         }
 

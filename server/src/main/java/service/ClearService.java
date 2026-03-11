@@ -5,17 +5,17 @@ import dataaccess.*;
 //basic class used for clearing all stored information before starting new game
 //all other services and DAOs rely on this class
 public class ClearService {
-    private final MemoryUserDAO userDao;
-    private final MemoryAuthDAO myAuthDAO;
-    private final MemoryGameDAO myGameDAO;
+    private final UserDAO userDao;
+    private final AuthDAO myAuthDAO;
+    private final GameDAO myGameDAO;
 
-    public ClearService(MemoryUserDAO userDao, MemoryAuthDAO myAuthDAO, MemoryGameDAO myGameDAO){
+    public ClearService(UserDAO userDao, AuthDAO myAuthDAO, GameDAO myGameDAO){
         this.userDao = userDao;
         this.myAuthDAO = myAuthDAO;
         this.myGameDAO = myGameDAO;
     }
 
-    public void clear( ) {
+    public void clear( ) throws DataAccessException {
         try {
             userDao.clear( );
         } catch (DataAccessException e) {

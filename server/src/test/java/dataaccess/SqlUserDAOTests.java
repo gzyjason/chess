@@ -18,8 +18,13 @@ public class SqlUserDAOTests {
         UserData testUser = new UserData("Tom", "password123", "abc123@byu.edu");
         userDAO.insertPlayer(testUser);
         UserData returnedUser = userDAO.retrievePlayer("Tom");
-        assertNotNull(returnedUser, "The returned user should not be null");
-        assertEquals(testUser, returnedUser, "The returned user should match the inserted user");
+        assertEquals(testUser.username(), returnedUser.username(), "Usernames should match");
+        assertEquals(testUser.email(), returnedUser.email(), "Emails should match");
+        assertNotEquals("password123", returnedUser.password(),
+                "Password should be hashed in database");
+        assertTrue(org.mindrot.jbcrypt.BCrypt.checkpw("password123", returnedUser.password()),
+                "Hashed password should be verifiable");
+
     }
 
     @Test
@@ -27,9 +32,8 @@ public class SqlUserDAOTests {
         UserData testUser = new UserData("Tom", "password123", "abc123@byu.edu");
         userDAO.insertPlayer(testUser);
         UserData testUserAgain = new UserData("Tom", "password456", "xyz456@byu.edu");
-        assertThrows(DataAccessException.class, () -> {
-            userDAO.insertPlayer(testUserAgain);
-        }, "Should not be able to insert duplicate username");
+        assertThrows(DataAccessException.class, () -> userDAO.insertPlayer(testUserAgain),
+                "Should not be able to insert duplicate username");
     }
 
 
@@ -40,8 +44,8 @@ public class SqlUserDAOTests {
 
         UserData returnedUser =userDAO.retrievePlayer("Tom");
 
-        assertNotNull(returnedUser, "The returned user should not be null");
-        assertEquals(testUser, returnedUser, "The returned user should match the inserted user");
+        assertEquals("Tom", returnedUser.username());
+        assertTrue(org.mindrot.jbcrypt.BCrypt.checkpw("password123", returnedUser.password()));
     }
 
     @Test

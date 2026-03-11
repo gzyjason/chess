@@ -21,14 +21,19 @@ public class Server {
     public Server() {
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
+        try {
+            DatabaseManager.createTables();
+            UserDAO userDAO = new SqlUserDAO();
+            AuthDAO authDAO = new SqlAuthDAO();
+            GameDAO gameDAO = new SqlGameDAO();
 
-        MemoryUserDAO userDao = new MemoryUserDAO();
-        MemoryAuthDAO authDao = new MemoryAuthDAO();
-        MemoryGameDAO gameDao = new MemoryGameDAO();
+            this.userService = new UserService(userDAO, authDAO);
+            this.gameService = new GameService(gameDAO, authDAO);
+            this.clearService = new ClearService(userDAO, authDAO, gameDAO);
 
-        this.userService = new UserService(userDao, authDao);
-        this.gameService = new GameService(gameDao, authDao);
-        this.clearService = new ClearService(userDao, authDao, gameDao);
+        } catch  (DataAccessException e) {
+            throw new RuntimeException("Failed to initialize database", e);        }
+
 
         javalin.delete("/db", this::clear);
         javalin.post("/user", this::register);
@@ -55,9 +60,13 @@ public class Server {
             ctx.status(statusCode);
             ctx.result(gson.toJson(Map.of("message", message != null ? message : "Error: internal server error")));
         });
+
+
+
+
     }
 
-    private void clear(Context ctx) {
+    private void clear(Context ctx) throws DataAccessException {
         clearService.clear();
         ctx.status(200);
         ctx.result("{}");
@@ -127,15 +136,6 @@ public class Server {
     }
 
     public int run(int desiredPort) {
-        try {
-            DatabaseManager.createDatabase();
-
-            new SqlAuthDAO();
-            new SqlUserDAO();
-            new SqlGameDAO();
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
         javalin.start(desiredPort);
         return javalin.port();
     }

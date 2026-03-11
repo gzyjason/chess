@@ -20,6 +20,48 @@ public class DatabaseManager {
     /**
      * Creates the database if it does not already exist.
      */
+
+    private static final String[] createStatements = {
+            """
+    CREATE TABLE IF NOT EXISTS user (
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (username)
+    )
+    """,
+            """
+    CREATE TABLE IF NOT EXISTS auth (
+        authToken VARCHAR(255) NOT NULL,
+        username VARCHAR(255) NOT NULL,
+        PRIMARY KEY (authToken)
+    )
+    """,
+            """
+    CREATE TABLE IF NOT EXISTS game (
+        gameID INT NOT NULL AUTO_INCREMENT,
+        whiteUsername VARCHAR(255),
+        blackUsername VARCHAR(255),
+        gameName VARCHAR(255) NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (gameID)
+    )
+    """
+    };
+    public static void createTables() throws DataAccessException {
+        createDatabase();
+        try (var conn = getConnection())  {
+
+            for (var statement : createStatements) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate( );
+                }
+            }
+
+        } catch (SQLException ex) {
+            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
+        }
+    }
     static public void createDatabase() throws DataAccessException {
         var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
         try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);

@@ -11,9 +11,9 @@ import results.ListGamesResult;
 import java.util.Collection;
 
 public class GameService {
-    private final MemoryGameDAO myGameDAO;
-    private final MemoryAuthDAO myAuthDAO;
-    public GameService(MemoryGameDAO myGameDAO, MemoryAuthDAO myAuthDAO){
+    private final GameDAO myGameDAO;
+    private final AuthDAO myAuthDAO;
+    public GameService(GameDAO myGameDAO, AuthDAO myAuthDAO){
         this.myGameDAO = myGameDAO;
         this.myAuthDAO = myAuthDAO;
     }

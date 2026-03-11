@@ -59,7 +59,7 @@ public class SqlAuthDAOTests {
     }
 
     @Test
-    public void deleteToken_Negative_NonExistent() throws DataAccessException {
+    public void deleteTokenNegative() throws DataAccessException {
         AuthData testToken = new AuthData("randomToken", "Tom");
         authDAO.createToken(testToken);
 

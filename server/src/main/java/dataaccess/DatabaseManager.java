@@ -21,7 +21,7 @@ public class DatabaseManager {
      * Creates the database if it does not already exist.
      */
 
-    private static final String[] createStatements = {
+    private static final String[] CREATE_STATEMENTS = {
             """
     CREATE TABLE IF NOT EXISTS user (
         username VARCHAR(255) NOT NULL,
@@ -52,7 +52,7 @@ public class DatabaseManager {
         createDatabase();
         try (var conn = getConnection())  {
 
-            for (var statement : createStatements) {
+            for (var statement : CREATE_STATEMENTS) {
                 try (var preparedStatement = conn.prepareStatement(statement)) {
                     preparedStatement.executeUpdate( );
                 }

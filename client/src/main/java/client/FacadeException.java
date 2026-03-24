@@ -4,7 +4,7 @@ public class FacadeException extends Exception{
 
     private final int statusCode;
 
-    public FacadeException(String message){
+    public FacadeException(int statusCode,String message){
         super(message);
         this.statusCode = statusCode;
     }

@@ -1,6 +1,7 @@
 package client;
 import com.google.gson.Gson;
 import request.CreateGameRequest;
+import request.JoinGameRequest;
 import request.LoginRequest;
 import request.RegisterRequest;
 import results.*;
@@ -40,7 +41,8 @@ public class ServerFacade {
     }
 
     public void joinGame(String authToken, String playerColor, int gameID) throws FacadeException{
-        httpRequests("PUT", "/game", null, null, authToken);
+        JoinGameRequest request = new JoinGameRequest(playerColor,gameID);
+        httpRequests("PUT", "/game", request, null, authToken);
     }
 
     public void clear() throws FacadeException{
@@ -75,7 +77,7 @@ public class ServerFacade {
                 try (InputStream errors = http.getErrorStream()){
                     InputStreamReader reader = new InputStreamReader(errors);
                     ErrorResult errorResult = new Gson().fromJson(reader, ErrorResult.class);
-                    throw new FacadeException(errorResult.getMessage());
+                    throw new FacadeException(responseCode, errorResult.getMessage());
                 }
             }
 
@@ -87,8 +89,10 @@ public class ServerFacade {
             }
 
             return null;
+        } catch (FacadeException ex){
+            throw ex;
         } catch (Exception ex) {
-            throw new FacadeException(ex.getMessage());
+            throw new FacadeException(500, ex.getMessage());
         }
 
 

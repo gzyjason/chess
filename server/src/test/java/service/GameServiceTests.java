@@ -47,7 +47,8 @@ public class GameServiceTests {
 
     @Test
     public void createGameBadName() throws DataAccessException{
-        RegisterResult registerResult = userService.register(new RegisterRequest("Tom", "password123",
+        RegisterResult registerResult = userService.register(new RegisterRequest("Tom",
+                "password123",
                 "abc123@byu.edu"));
         String validToken = registerResult.authToken();
 
@@ -72,7 +73,8 @@ public class GameServiceTests {
 
     @Test
     public void listGamesSuccess() throws DataAccessException {
-        RegisterResult reg = userService.register(new RegisterRequest("Tom", "pass", "t@b.edu"));
+        RegisterResult reg = userService.register(new RegisterRequest("Tom", "pass",
+                "t@b.edu"));
         gameService.createGame(reg.authToken(), new CreateGameRequest("Game 1"));
         gameService.createGame(reg.authToken(), new CreateGameRequest("Game 2"));
 
@@ -92,8 +94,10 @@ public class GameServiceTests {
 
     @Test
     public void joinGameSuccess() throws DataAccessException {
-        RegisterResult registerResult = userService.register(new RegisterRequest("Tom", "password123", "abc123@byu.edu"));
-        CreateGameResult game = gameService.createGame(registerResult.authToken(), new CreateGameRequest("Test Game"));
+        RegisterResult registerResult = userService.register(new RegisterRequest("Tom",
+                "password123", "abc123@byu.edu"));
+        CreateGameResult game = gameService.createGame(registerResult.authToken(),
+                new CreateGameRequest("Test Game"));
 
         gameService.joinGame(registerResult.authToken(), new JoinGameRequest("WHITE", game.gameID()));
 
@@ -115,7 +119,8 @@ public class GameServiceTests {
         gameService.joinGame(player1Result.authToken(), new JoinGameRequest("BLACK", game.gameID()));
 
         DataAccessException exception = Assertions.assertThrows(DataAccessException.class, () ->
-                gameService.joinGame(player2Result.authToken(), new JoinGameRequest("BLACK", game.gameID())));
+                gameService.joinGame(player2Result.authToken(), new JoinGameRequest("BLACK",
+                        game.gameID())));
 
         Assertions.assertEquals("Error: already taken", exception.getMessage()); //
     }

@@ -1,11 +1,13 @@
 package client;
 import com.google.gson.Gson;
+import request.CreateGameRequest;
+import request.LoginRequest;
+import request.RegisterRequest;
 import results.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.Map;
 
 public class ServerFacade {
     String serverUrl;
@@ -15,24 +17,35 @@ public class ServerFacade {
     }
 
     public RegisterResult register(String username, String password, String email) throws FacadeException {
-        return null;
+        RegisterRequest request = new RegisterRequest(username, password, email);
+        return httpRequests("POST", "/user", request, RegisterResult.class, null);
     }
 
     public LoginResult login(String username, String password) throws FacadeException{
-        return null;
+        LoginRequest request = new LoginRequest(username, password);
+        return httpRequests("POST", "/session", request, LoginResult.class, null);
     }
 
-    public void logout(String authToken) throws FacadeException {}
+    public void logout(String authToken) throws FacadeException {
+        httpRequests("DELETE", "/session", null, null, authToken);
+    }
 
     public ListGamesResult listGame(String authToken) throws FacadeException {
-        return null;
+        return httpRequests("GET", "/game", null, ListGamesResult.class, authToken);
     }
 
     public CreateGameResult createGame(String authToken, String gameName) throws FacadeException {
-        return null;
+        CreateGameRequest request = new CreateGameRequest(gameName);
+        return httpRequests("POST", "/game", request, CreateGameResult.class, authToken);
     }
 
-    public void joinGame(String authToken, String playerColor, int gameID) throws FacadeException{}
+    public void joinGame(String authToken, String playerColor, int gameID) throws FacadeException{
+        httpRequests("PUT", "/game", null, null, authToken);
+    }
+
+    public void clear() throws FacadeException{
+        httpRequests("DELETE", "/db", null, null, null);
+    }
 
     private <T> T httpRequests(String method, String path, Object requestData, Class<T> responseClass,
                                String headerToken) throws FacadeException {
@@ -61,8 +74,8 @@ public class ServerFacade {
             if (responseCode >= 300) {
                 try (InputStream errors = http.getErrorStream()){
                     InputStreamReader reader = new InputStreamReader(errors);
-                    Map responseMap = new Gson().fromJson(reader, Map.class);
-                    throw new FacadeException(responseMap.get("message").toString());
+                    ErrorResult errorResult = new Gson().fromJson(reader, ErrorResult.class);
+                    throw new FacadeException(errorResult.getMessage());
                 }
             }
 

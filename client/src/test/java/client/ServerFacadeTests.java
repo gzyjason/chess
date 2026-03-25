@@ -134,6 +134,22 @@ public class ServerFacadeTests {
     }
 
     @Test
+    public void observeGamePositive() throws FacadeException {
+        RegisterResult result = facade.register("tom", "password123", "abc123@byu.edu");
+        CreateGameResult createGameResult = facade.createGame(result.authToken(), "game1");
+        Assertions.assertDoesNotThrow(() -> facade.observeGame(result.authToken(), createGameResult.gameID()));
+    }
+
+    @Test
+    public void observeGameNegative() throws  FacadeException{
+        RegisterResult result = facade.register("tom", "password123", "abc123@byu.edu");
+        CreateGameResult createGameResult = facade.createGame(result.authToken(), "game1");
+        FacadeException exception = Assertions.assertThrows(FacadeException.class,
+                () -> facade.observeGame("invalidToken", createGameResult.gameID()));
+        Assertions.assertEquals(401, exception.getStatusCode());
+    }
+
+    @Test
     public void clearPositive() throws FacadeException{
         RegisterResult result = facade.register("tom", "password123", "abc123@byu.edu");
         facade.createGame(result.authToken(), "game1");

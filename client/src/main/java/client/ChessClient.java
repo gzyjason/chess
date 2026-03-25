@@ -1,4 +1,5 @@
 package client;
+import chess.ChessGame;
 import model.GameData;
 
 import java.util.ArrayList;
@@ -34,6 +35,8 @@ public class ChessClient {
                 eval(splitInput);
             } catch(FacadeException exception) {
                 System.out.println("Error: " + exception.getMessage());
+            } catch (Exception exception){
+                System.out.println("An unexpected error occured: " + exception.getMessage());
             }
         }
 
@@ -108,14 +111,20 @@ public class ChessClient {
                     this.cachedGames = new ArrayList<>(gameList.games());
                     if (cachedGames.isEmpty()) {
                         System.out.println("No games found. Use 'create <NAME>' to start one");
+                        break;
                     }
 
                     System.out.println("Current Games:");
                     for (int i = 0; i < cachedGames.size(); i++){
                         var currentGame = cachedGames.get(i);
                         int displayIndex = i + 1;
-                        System.out.println(displayIndex + ". " + currentGame.gameName());
+                        String whitePlayer = currentGame.whiteUsername() != null ? currentGame.whiteUsername() : "Empty";
+                        String blackPlayer = currentGame.blackUsername() != null ? currentGame.blackUsername() : "Empty";
+                        System.out.println(displayIndex + ". " + currentGame.gameName() +
+                                " | White: " + whitePlayer +
+                                " | Black: " + blackPlayer);
                     }
+                    break;
                 case "join":
                     if (tokens.length != 3) {
                         System.out.println("Expected 2 arguments: join <ID> [WHITE|BLACK]");
@@ -144,7 +153,46 @@ public class ChessClient {
                         System.out.println("Error: " + exception.getMessage());
                     }
                     break;
+                case "observe":
+                    if (tokens.length != 2) {
+                        System.out.println("Expected 1 argument: observe <ID>");
+                        break;
+                    }
+                    if (cachedGames == null || cachedGames.isEmpty()) {
+                        System.out.println("Please 'list' games before attempting to join or observe");
+                        break;
+                    }
+
+                    try {
+                        int listNumber = Integer.parseInt(tokens[1]);
+                        int index = listNumber - 1;
+                        if (index < 0 || index >= cachedGames.size()){
+                            System.out.println("Invalid game number");
+                            break;
+                        }
+                        int retrievedGameID = cachedGames.get(index).gameID();
+                        serverFacade.observeGame(authToken, retrievedGameID);
+                    } catch (NumberFormatException exception) {
+                        System.out.println("ID must be an integer");
+                    } catch (FacadeException exception){
+                        System.out.println("Error: " + exception.getMessage());
+                    }
+                    break;
+
+                case "logout":
+                    if (tokens.length != 1){
+                        System.out.println("No argument accepted for logout");
+                        break;
+                    }
+                    serverFacade.logout(authToken);
+                    this.authToken = null;
+                    this.state = State.SIGNED_OUT;
+                    System.out.println("Logged out successfully");
             }
         }
     }
+
+//    private void drawBoard(ChessGame.TeamColor perspective){
+//
+//    }
 }

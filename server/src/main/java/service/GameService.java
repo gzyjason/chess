@@ -53,11 +53,12 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
+
         String username = authorized.username();
         String team = request.playerColor();
 
-        if (team ==  null) {
-            throw new DataAccessException("Error: bad request");
+        if (team == null || team.isEmpty()) {
+            return;
         }
 
          if  (team.equalsIgnoreCase("WHITE")) {

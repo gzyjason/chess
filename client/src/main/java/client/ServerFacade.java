@@ -1,5 +1,5 @@
 package client;
-import com.google.gson.Gson;
+import com.google.gson.*;
 import request.CreateGameRequest;
 import request.JoinGameRequest;
 import request.LoginRequest;
@@ -12,6 +12,8 @@ import java.net.URL;
 
 public class ServerFacade {
     String serverUrl;
+
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     public ServerFacade(String serverUrl){
         this.serverUrl = serverUrl;
@@ -45,6 +47,11 @@ public class ServerFacade {
         httpRequests("PUT", "/game", request, null, authToken);
     }
 
+    public void observeGame(String authToken, int gameID) throws FacadeException {
+        JoinGameRequest request = new JoinGameRequest(null, gameID);
+        httpRequests("PUT", "/game", request, null, authToken);
+    }
+
     public void clear() throws FacadeException{
         httpRequests("DELETE", "/db", null, null, null);
     }
@@ -65,7 +72,8 @@ public class ServerFacade {
                 http.setDoOutput(true);
                 http.addRequestProperty("Content-Type", "application/json");
                 try (OutputStream output = http.getOutputStream()){
-                    String json = new Gson().toJson(requestData);
+                    String json =this.gson.toJson(requestData);
+
                     output.write(json.getBytes());
                 }
             }
@@ -76,7 +84,7 @@ public class ServerFacade {
             if (responseCode >= 300) {
                 try (InputStream errors = http.getErrorStream()){
                     InputStreamReader reader = new InputStreamReader(errors);
-                    ErrorResult errorResult = new Gson().fromJson(reader, ErrorResult.class);
+                    ErrorResult errorResult = this.gson.fromJson(reader, ErrorResult.class);
                     throw new FacadeException(responseCode, errorResult.getMessage());
                 }
             }
@@ -84,7 +92,7 @@ public class ServerFacade {
             if (responseClass != null && responseClass != void.class) {
                 try (InputStream inputStream = http.getInputStream()){
                     InputStreamReader reader = new InputStreamReader(inputStream);
-                    return new Gson().fromJson(reader, responseClass);
+                    return this.gson.fromJson(reader, responseClass);
                 }
             }
 

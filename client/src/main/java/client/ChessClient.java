@@ -185,20 +185,15 @@ public class ChessClient {
             return;
         }
         try {
-            int listNumber = Integer.parseInt(tokens[1]);
-            int index = listNumber - 1;
-            if (index < 0 || index >= cachedGames.size()){
-                System.out.println("Invalid game number");
-                return;
-            }
-            int retrievedGameID = cachedGames.get(index).gameID();
-
+            GameData game = getGameFromToken(tokens[1]);
             ChessGame.TeamColor color = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
-            serverFacade.joinGame(authToken, tokens[2].toUpperCase(), retrievedGameID);
-            System.out.println("Successfully joined game: " + cachedGames.get(index));
+            serverFacade.joinGame(authToken, tokens[2].toUpperCase(), game.gameID());
+            System.out.println("Successfully joined game: " + game);
             drawBoard(color);
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
+        } catch (IllegalArgumentException exception) {
+            System.out.println(exception.getMessage());
         } catch (FacadeException exception){
             System.out.println("Error: " + exception.getMessage());
         }
@@ -215,17 +210,13 @@ public class ChessClient {
         }
 
         try {
-            int listNumber = Integer.parseInt(tokens[1]);
-            int index = listNumber - 1;
-            if (index < 0 || index >= cachedGames.size()){
-                System.out.println("Invalid game number");
-                return;
-            }
-            int retrievedGameID = cachedGames.get(index).gameID();
-            serverFacade.observeGame(authToken, retrievedGameID);
+            GameData game = getGameFromToken(tokens[1]);
+            serverFacade.observeGame(authToken, game.gameID());
             drawBoard(ChessGame.TeamColor.WHITE);
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
+        } catch (IllegalArgumentException exception) {
+            System.out.println(exception.getMessage());
         } catch (FacadeException exception){
             System.out.println("Error: " + exception.getMessage());
         }
@@ -316,5 +307,14 @@ public class ChessClient {
             case ROOK -> System.out.print(EscapeSequences.WHITE_ROOK);
             case PAWN -> System.out.print(EscapeSequences.WHITE_PAWN);
         }
+    }
+
+    private GameData getGameFromToken(String token) throws IllegalArgumentException {
+        int listNumber = Integer.parseInt(token);
+        int index = listNumber - 1;
+        if (index < 0 || index >= cachedGames.size()){
+            throw new IllegalArgumentException("Invalid game number");
+        }
+        return cachedGames.get(index);
     }
 }

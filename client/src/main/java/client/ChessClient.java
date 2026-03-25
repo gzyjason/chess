@@ -150,7 +150,11 @@ public class ChessClient {
                             break;
                         }
                         int retrievedGameID = cachedGames.get(index).gameID();
+
+                        ChessGame.TeamColor color = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
                         serverFacade.joinGame(authToken, tokens[2].toUpperCase(), retrievedGameID);
+                        System.out.println("Successfully joined game: " + cachedGames.get(index));
+                        drawBoard(color);
                     } catch (NumberFormatException exception) {
                         System.out.println("ID must be an integer");
                     } catch (FacadeException exception){
@@ -193,6 +197,7 @@ public class ChessClient {
                     this.authToken = null;
                     this.state = State.SIGNED_OUT;
                     System.out.println("Logged out successfully");
+                    break;
             }
         }
     }

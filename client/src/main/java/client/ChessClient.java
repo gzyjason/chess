@@ -176,6 +176,7 @@ public class ChessClient {
                         }
                         int retrievedGameID = cachedGames.get(index).gameID();
                         serverFacade.observeGame(authToken, retrievedGameID);
+                        drawBoard(ChessGame.TeamColor.WHITE);
                     } catch (NumberFormatException exception) {
                         System.out.println("ID must be an integer");
                     } catch (FacadeException exception){
@@ -196,19 +197,30 @@ public class ChessClient {
         }
     }
 
-    private void drawBoard(){
+    private void drawBoard(ChessGame.TeamColor perspective) {
         ChessBoard board = new ChessBoard();
         board.resetBoard();
 
-        String[] headers = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        int startRow = (perspective == ChessGame.TeamColor.BLACK) ? 1 : 8;
+        int endRow = (perspective == ChessGame.TeamColor.BLACK) ? 8 : 1;
+        int rowDirection = (perspective == ChessGame.TeamColor.BLACK) ? 1 : -1;
+
+        int startCol = (perspective == ChessGame.TeamColor.BLACK) ? 8 : 1;
+        int endCol = (perspective == ChessGame.TeamColor.BLACK) ? 1 : 8;
+        int colDirection = (perspective == ChessGame.TeamColor.BLACK) ? -1 : 1;
+
+        String[] headers = (perspective == ChessGame.TeamColor.BLACK)
+                ? new String[]{"h", "g", "f", "e", "d", "c", "b", "a"}
+                : new String[]{"a", "b", "c", "d", "e", "f", "g", "h"};
+
         boardSetup(headers);
 
-        for (int row = 8; row >= 1; row--) {
+        for (int row = startRow; row != endRow + rowDirection; row += rowDirection) {
             System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
             System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
             System.out.print(" " + row + " ");
 
-            for (int col = 1; col <= 8; col++) {
+            for (int col = startCol; col != endCol + colDirection; col += colDirection) {
                 if ((row + col) % 2 != 0) {
                     System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
                 } else {
@@ -238,6 +250,7 @@ public class ChessClient {
         System.out.print("   ");
         System.out.println(EscapeSequences.RESET_BG_COLOR);
     }
+
 
     private void printPiece(ChessPiece piece) {
         if (piece == null) {

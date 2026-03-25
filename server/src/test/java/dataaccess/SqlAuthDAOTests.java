@@ -5,20 +5,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class SqlAuthDAOTests {
     private SqlAuthDAO authDAO;
+
     @BeforeEach
     public void setUp() throws DataAccessException {
         authDAO = new SqlAuthDAO();
         authDAO.clear();
     }
 
-    @Test
-    public void createTokenPositive() throws DataAccessException{
-        AuthData testToken = new AuthData("randomToken", "Tom");
+    private void verifyTokenCreationAndRetrieval(String tokenString, String username) throws DataAccessException {
+        AuthData testToken = new AuthData(tokenString, username);
         authDAO.createToken(testToken);
-        AuthData returnedToken = authDAO.getToken("randomToken");
+        AuthData returnedToken = authDAO.getToken(tokenString);
 
         assertNotNull(returnedToken, "The returned token shouldn't be null");
         assertEquals(testToken, returnedToken, "The returned token should match the created token");
+    }
+
+    @Test
+    public void createTokenPositive() throws DataAccessException{
+        verifyTokenCreationAndRetrieval("randomToken", "Tom");
     }
 
     @Test
@@ -31,12 +36,7 @@ public class SqlAuthDAOTests {
 
     @Test
     public void getTokenPositive() throws DataAccessException {
-        AuthData testToken = new AuthData("randomToken", "Tom");
-        authDAO.createToken(testToken);
-        AuthData returnedToken = authDAO.getToken("randomToken");
-
-        assertNotNull(returnedToken, "The returned token shouldn't be null");
-        assertEquals(testToken, returnedToken, "The returned token should match the created token");
+        verifyTokenCreationAndRetrieval("getTokenId", "Jerry");
     }
 
     @Test

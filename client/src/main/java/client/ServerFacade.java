@@ -48,8 +48,19 @@ public class ServerFacade {
     }
 
     public void observeGame(String authToken, int gameID) throws FacadeException {
-        JoinGameRequest request = new JoinGameRequest(null, gameID);
-        httpRequests("PUT", "/game", request, null, authToken);
+        ListGamesResult gamesResult = listGame(authToken);
+        boolean gameExists = false;
+
+        for (var game : gamesResult.games()) {
+            if (game.gameID() == gameID) {
+                gameExists = true;
+                break;
+            }
+        }
+
+        if (!gameExists) {
+            throw new FacadeException(400, "Error: bad request");
+        }
     }
 
     public void clear() throws FacadeException{

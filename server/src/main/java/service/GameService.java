@@ -58,8 +58,7 @@ public class GameService {
         String team = request.playerColor();
 
         if (team == null) {
-            return;
-        }
+            throw new DataAccessException("Error: bad request");        }
 
          if  (team.equalsIgnoreCase("WHITE")) {
             if(game.whiteUsername() !=null) {

@@ -40,32 +40,32 @@ public class WebSocketHandler {
         try {
             UserGameCommand baseCommand = gson.fromJson(rawJson, UserGameCommand.class);
 
+            String authToken = baseCommand.getAuthToken();
+            Integer retrievedId = baseCommand.getGameID();
             switch (baseCommand.getCommandType()){
-                case MAKE_MOVE:
+                case MAKE_MOVE: {
                     MakeMoveCommand moveCommand = gson.fromJson(rawJson, MakeMoveCommand.class);
                     break;
+                }
 
-                case CONNECT:
-                    String authToken = baseCommand.getAuthToken();
-                    Integer retrievedId = baseCommand.getGameID();
-
+                case CONNECT: {
                     AuthData authData = authDAO.getToken(authToken);
-                    if (authData == null){
+                    if (authData == null) {
                         ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
                         break;
                     }
 
                     GameData gameData = gameDAO.getGame(retrievedId);
-                    if(gameData == null){
+                    if (gameData == null) {
                         ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
                         break;
                     }
 
                     String username = authData.username();
                     String role = "an observer";
-                    if(username.equals((gameData.whiteUsername()))){
+                    if (username.equals((gameData.whiteUsername()))) {
                         role = "White";
-                    } else if (username.equals((gameData.blackUsername()))){
+                    } else if (username.equals((gameData.blackUsername()))) {
                         role = "Black";
                     }
 
@@ -83,20 +83,88 @@ public class WebSocketHandler {
                     String notificationJson = gson.toJson(notification);
 
                     for (WsContext sessionContext : sessions) {
-                        if (!sessionContext.sessionId().equals(ctx.sessionId())){
+                        if (!sessionContext.sessionId().equals(ctx.sessionId())) {
                             sessionContext.send(notificationJson);
                         }
                     }
 
                     break;
+                }
 
-                case LEAVE:
+                case LEAVE: {
+                    AuthData authData = authDAO.getToken(authToken);
+                    if (authData == null) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
+                        break;
+                    }
 
+                    GameData gameData = gameDAO.getGame(retrievedId);
+                    if (gameData == null) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
+                        break;
+                    }
+
+                    String username = authData.username();
+
+                    if (username.equals(gameData.whiteUsername())) {
+                        gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
+                    } else if (username.equals(gameData.blackUsername())) {
+                        gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
+                    }
+
+                    Set<WsContext> sessions = idMap.get(retrievedId);
+                    if (sessions != null) {
+                        sessions.removeIf(s -> s.sessionId().equals(ctx.sessionId()));
+
+                        NotificationMessage notification = new NotificationMessage(username + " has left the game.");
+                        String notificationJson = gson.toJson(notification);
+
+                        for (WsContext s : sessions) {
+                            s.send(notificationJson);
+                        }
+                    }
                     break;
+                }
 
-                case RESIGN:
+                case RESIGN: {
+                    AuthData authData = authDAO.getToken(authToken);
+                    if (authData == null) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
+                        break;
+                    }
 
+                    GameData gameData = gameDAO.getGame(retrievedId);
+                    if (gameData == null) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
+                        break;
+                    }
+
+                    String username = authData.username();
+
+                    if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
+                        break;
+                    }
+
+                    if (gameData.game().isGameOver()) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+                        break;
+                    }
+
+                    gameData.game().setGameOver(true);
+                    gameDAO.updateGame(gameData);
+
+                    NotificationMessage notification = new NotificationMessage(username + " has resigned. Game over.");
+                    String notificationJson = gson.toJson(notification);
+
+                    Set<WsContext> sessions = idMap.get(retrievedId);
+                    if (sessions != null) {
+                        for (WsContext s : sessions) {
+                            s.send(notificationJson);
+                        }
+                    }
                     break;
+                }
             }
         } catch (Exception exception){
             ErrorMessage networkError = new ErrorMessage("Error: invalid format");

@@ -220,6 +220,16 @@ public class ChessGame {
         return null;
     }
 
+    private boolean isGameOver = false;
+
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public void setGameOver(boolean gameOver){
+        this.isGameOver = gameOver;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) {

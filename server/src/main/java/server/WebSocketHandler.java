@@ -123,11 +123,7 @@ public class WebSocketHandler {
                         role = "Black";
                     }
 
-                    Set<WsContext> sessions = idMap.get(retrievedId);
-                    if (sessions == null) {
-                        sessions = ConcurrentHashMap.newKeySet();
-                        idMap.put(retrievedId, sessions);
-                    }
+                    Set<WsContext> sessions = idMap.computeIfAbsent(retrievedId, k -> ConcurrentHashMap.newKeySet());
                     sessions.add(ctx);
 
                     LoadGameMessage loadMessage = new LoadGameMessage(gameData);
@@ -136,11 +132,7 @@ public class WebSocketHandler {
                     NotificationMessage notification = new NotificationMessage(username + " has joined the game as " + role);
                     String notificationJson = gson.toJson(notification);
 
-                    for (WsContext sessionContext : sessions) {
-                        if (!sessionContext.sessionId().equals(ctx.sessionId())) {
-                            sessionContext.send(notificationJson);
-                        }
-                    }
+                    broadcastToOthers(retrievedId, ctx.sessionId(), notification);
 
                     break;
                 }
@@ -167,9 +159,7 @@ public class WebSocketHandler {
                         NotificationMessage notification = new NotificationMessage(username + " has left the game.");
                         String notificationJson = gson.toJson(notification);
 
-                        for (WsContext s : sessions) {
-                            s.send(notificationJson);
-                        }
+                        broadcastToAll(retrievedId, notificationJson);
                     }
                     break;
                 }
@@ -185,12 +175,12 @@ public class WebSocketHandler {
 
                     if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
                         ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
-                        break;
+                        return;
                     }
 
                     if (gameData.game().isGameOver()) {
                         ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
-                        break;
+                        return;
                     }
 
                     gameData.game().setGameOver(true);
@@ -201,9 +191,7 @@ public class WebSocketHandler {
 
                     Set<WsContext> sessions = idMap.get(retrievedId);
                     if (sessions != null) {
-                        for (WsContext s : sessions) {
-                            s.send(notificationJson);
-                        }
+                        broadcastToAll(retrievedId, notificationJson);
                     }
                     break;
                 }

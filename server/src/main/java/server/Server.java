@@ -18,6 +18,8 @@ public class Server {
     private final ClearService clearService;
     private final Gson gson = new Gson();
     private final WebSocketHandler webSocketHandler;
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
 
     public Server() {
 
@@ -31,7 +33,9 @@ public class Server {
             this.userService = new UserService(userDAO, authDAO);
             this.gameService = new GameService(gameDAO, authDAO);
             this.clearService = new ClearService(userDAO, authDAO, gameDAO);
-            this.webSocketHandler = new WebSocketHandler();
+            this.authDAO = new SqlAuthDAO();
+            this.gameDAO = new SqlGameDAO();
+            this.webSocketHandler = new WebSocketHandler(this.authDAO, this.gameDAO);
 
         } catch  (DataAccessException e) {
             throw new RuntimeException("Failed to initialize database", e);        }

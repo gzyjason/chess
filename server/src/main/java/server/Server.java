@@ -18,8 +18,6 @@ public class Server {
     private final ClearService clearService;
     private final Gson gson = new Gson();
     private final WebSocketHandler webSocketHandler;
-    private final AuthDAO authDAO;
-    private final GameDAO gameDAO;
 
     public Server() {
 
@@ -33,9 +31,9 @@ public class Server {
             this.userService = new UserService(userDAO, authDAO);
             this.gameService = new GameService(gameDAO, authDAO);
             this.clearService = new ClearService(userDAO, authDAO, gameDAO);
-            this.authDAO = new SqlAuthDAO();
-            this.gameDAO = new SqlGameDAO();
-            this.webSocketHandler = new WebSocketHandler(this.authDAO, this.gameDAO);
+            AuthDAO authDAO1 = new SqlAuthDAO();
+            GameDAO gameDAO1 = new SqlGameDAO();
+            this.webSocketHandler = new WebSocketHandler(authDAO1, gameDAO1);
 
         } catch  (DataAccessException e) {
             throw new RuntimeException("Failed to initialize database", e);        }
@@ -142,21 +140,15 @@ public class Server {
     }
 
     public int run(int desiredPort) {
-        Javalin app = Javalin.create(config -> {
-            config.staticFiles.add("/public");
-        });
-
-        app.ws("/ws", ws -> {
+        javalin.ws("/ws", ws -> {
             ws.onConnect(webSocketHandler::onConnect);
             ws.onMessage(webSocketHandler::onMessage);
             ws.onClose(webSocketHandler::onClose);
             ws.onError(ctx -> System.out.println("WebSocket Error: " + ctx.error()));
         });
 
-        app.get("/game", ctx -> ctx.result("HTTP Endpoint Active"));
-
-        app.start(desiredPort);
-        return app.port();
+        javalin.start(desiredPort);
+        return javalin.port();
     }
 
     public void stop() {

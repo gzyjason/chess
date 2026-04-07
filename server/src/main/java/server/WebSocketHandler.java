@@ -49,17 +49,11 @@ public class WebSocketHandler {
                 }
 
                 case CONNECT: {
-                    AuthData authData = authDAO.getToken(authToken);
-                    if (authData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
-                        break;
-                    }
+                    AuthData authData = validateAuth(ctx, authToken);
+                    if (authData == null) return;
 
-                    GameData gameData = gameDAO.getGame(retrievedId);
-                    if (gameData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
-                        break;
-                    }
+                    GameData gameData = validateGame(ctx, retrievedId);
+                    if (gameData == null) return;
 
                     String username = authData.username();
                     String role = "an observer";
@@ -92,17 +86,11 @@ public class WebSocketHandler {
                 }
 
                 case LEAVE: {
-                    AuthData authData = authDAO.getToken(authToken);
-                    if (authData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
-                        break;
-                    }
+                    AuthData authData = validateAuth(ctx, authToken);
+                    if (authData == null) return;
 
-                    GameData gameData = gameDAO.getGame(retrievedId);
-                    if (gameData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
-                        break;
-                    }
+                    GameData gameData = validateGame(ctx, retrievedId);
+                    if (gameData == null) return;
 
                     String username = authData.username();
 
@@ -127,17 +115,11 @@ public class WebSocketHandler {
                 }
 
                 case RESIGN: {
-                    AuthData authData = authDAO.getToken(authToken);
-                    if (authData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
-                        break;
-                    }
+                    AuthData authData = validateAuth(ctx, authToken);
+                    if (authData == null) return;
 
-                    GameData gameData = gameDAO.getGame(retrievedId);
-                    if (gameData == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
-                        break;
-                    }
+                    GameData gameData = validateGame(ctx, retrievedId);
+                    if (gameData == null) return;
 
                     String username = authData.username();
 
@@ -184,8 +166,21 @@ public class WebSocketHandler {
                 idMap.remove(gameId);
             }
         }
+    }
 
+    private AuthData validateAuth(WsMessageContext ctx, String authToken) throws DataAccessException {
+        AuthData authData = authDAO.getToken(authToken);
+        if (authData == null) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
+        }
+        return authData;
+    }
 
-
+    private GameData validateGame(WsMessageContext ctx, Integer gameID) throws DataAccessException {
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
+        }
+        return gameData;
     }
 }

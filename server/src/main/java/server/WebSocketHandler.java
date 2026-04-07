@@ -12,9 +12,7 @@ import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 
-import java.time.Duration;
-import java.util.Map;
-import java.util.Set;
+import java.time.Duration;import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketHandler {
@@ -23,237 +21,185 @@ public class WebSocketHandler {
     private final GameDAO gameDAO;
     ConcurrentHashMap<Integer, Set<WsContext>> idMap = new ConcurrentHashMap<>();
 
-
-    public WebSocketHandler(AuthDAO authDAO, GameDAO gameDAO){
+    public WebSocketHandler(AuthDAO authDAO, GameDAO gameDAO) {
         this.authDAO = authDAO;
         this.gameDAO = gameDAO;
-
     }
-    public void onConnect(WsConnectContext ctx){
+
+    public void onConnect(WsConnectContext ctx) {
         ctx.session.setIdleTimeout(Duration.ofSeconds(30));
         System.out.println("New WebSocket connection established: " + ctx.sessionId());
     }
 
-    public void onMessage (WsMessageContext ctx){
+    public void onMessage(WsMessageContext ctx) {
         String rawJson = ctx.message();
-
-
         try {
             UserGameCommand baseCommand = gson.fromJson(rawJson, UserGameCommand.class);
-
-            String authToken = baseCommand.getAuthToken();
-            Integer retrievedId = baseCommand.getGameID();
-            switch (baseCommand.getCommandType()){
-                case MAKE_MOVE: {
-                    AuthData authData = validateAuth(ctx, authToken);
-                    if (authData == null) return;
-
-                    GameData gameData = validateGame(ctx, retrievedId);
-                    if (gameData == null) return;
-
-                    MakeMoveCommand moveCommand = gson.fromJson(rawJson, MakeMoveCommand.class);
-                    ChessMove move = moveCommand.getMove();
-                    ChessGame game = gameData.game();
-                    String username = authData.username();
-
-                    if (game.isGameOver()) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
-                        return;
-                    }
-
-                    ChessGame.TeamColor playerColor = null;
-                    if (username.equals(gameData.whiteUsername())) {
-                        playerColor = ChessGame.TeamColor.WHITE;
-                    } else if (username.equals(gameData.blackUsername())) {
-                        playerColor = ChessGame.TeamColor.BLACK;
-                    }
-
-                    if (playerColor == null) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot make moves")));
-                        return;
-                    }
-
-                    if (game.getTeamTurn() != playerColor) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: it is not your turn")));
-                        return;
-                    }
-
-                    try {
-                        game.makeMove(move);
-
-                        if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
-                            game.setGameOver(true);
-                        } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
-                            game.setGameOver(true);
-                        }
-
-                        gameDAO.updateGame(gameData);
-
-                        LoadGameMessage loadMessage = new LoadGameMessage(gameData);
-                        String loadJson = gson.toJson(loadMessage);
-                        broadcastToAll(retrievedId, loadJson);
-
-                        String moveDescription = String.format("%s moved from %s to %s", username, move.getStartPosition(), move.getEndPosition());
-                        broadcastToOthers(retrievedId, ctx.sessionId(), new NotificationMessage(moveDescription));
-
-                        if (game.isGameOver()) {
-                            if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
-                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Checkmate! The game is over.")));
-                            } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
-                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Stalemate! The game is over.")));
-                            } else {
-                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("The game is over.")));
-                            }
-                        } else if (game.isInCheck(game.getTeamTurn())) {
-                            broadcastToAll(retrievedId, gson.toJson(new NotificationMessage(game.getTeamTurn() + " is in check!")));
-                        }
-
-                    } catch (InvalidMoveException e) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
-                    }
-                    break;
-                }
-
-                case CONNECT: {
-                    AuthData authData = validateAuth(ctx, authToken);
-                    if (authData == null) return;
-
-                    GameData gameData = validateGame(ctx, retrievedId);
-                    if (gameData == null) return;
-
-                    String username = authData.username();
-                    String role = "an observer";
-                    if (username.equals((gameData.whiteUsername()))) {
-                        role = "White";
-                    } else if (username.equals((gameData.blackUsername()))) {
-                        role = "Black";
-                    }
-
-                    Set<WsContext> sessions = idMap.computeIfAbsent(retrievedId, ignored -> ConcurrentHashMap.newKeySet());
-                    sessions.add(ctx);
-
-                    LoadGameMessage loadMessage = new LoadGameMessage(gameData);
-                    ctx.send(gson.toJson(loadMessage));
-
-                    NotificationMessage notification = new NotificationMessage(username + " has joined the game as " + role);
-
-                    broadcastToOthers(retrievedId, ctx.sessionId(), notification);
-
-                    break;
-                }
-
-                case LEAVE: {
-                    AuthData authData = validateAuth(ctx, authToken);
-                    if (authData == null) return;
-
-                    GameData gameData = validateGame(ctx, retrievedId);
-                    if (gameData == null) return;
-
-                    String username = authData.username();
-
-                    if (username.equals(gameData.whiteUsername())) {
-                        gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
-                    } else if (username.equals(gameData.blackUsername())) {
-                        gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
-                    }
-
-                    Set<WsContext> sessions = idMap.get(retrievedId);
-                    if (sessions != null) {
-                        sessions.removeIf(s -> s.sessionId().equals(ctx.sessionId()));
-
-                        NotificationMessage notification = new NotificationMessage(username + " has left the game.");
-                        String notificationJson = gson.toJson(notification);
-
-                        broadcastToAll(retrievedId, notificationJson);
-                    }
-                    break;
-                }
-
-                case RESIGN: {
-                    AuthData authData = validateAuth(ctx, authToken);
-                    if (authData == null) return;
-
-                    GameData gameData = validateGame(ctx, retrievedId);
-                    if (gameData == null) return;
-
-                    String username = authData.username();
-
-                    if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
-                        return;
-                    }
-
-                    if (gameData.game().isGameOver()) {
-                        ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
-                        return;
-                    }
-
-                    gameData.game().setGameOver(true);
-                    gameDAO.updateGame(gameData);
-
-                    NotificationMessage notification = new NotificationMessage(username + " has resigned. Game over.");
-                    String notificationJson = gson.toJson(notification);
-
-                    Set<WsContext> sessions = idMap.get(retrievedId);
-                    if (sessions != null) {
-                        broadcastToAll(retrievedId, notificationJson);
-                    }
-                    break;
-                }
+            switch (baseCommand.getCommandType()) {
+                case MAKE_MOVE -> handleMakeMove(ctx, rawJson, baseCommand);
+                case CONNECT -> handleConnect(ctx, baseCommand);
+                case LEAVE -> handleLeave(ctx, baseCommand);
+                case RESIGN -> handleResign(ctx, baseCommand);
             }
-        } catch (Exception exception){
-            ErrorMessage networkError = new ErrorMessage("Error: invalid format");
-            ctx.send(gson.toJson(networkError));
+        } catch (Exception exception) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: invalid format")));
         }
     }
 
-    public void onClose(WsCloseContext ctx){
+    private void handleMakeMove(WsMessageContext ctx, String rawJson, UserGameCommand base) throws DataAccessException {
+        AuthData authData = validateAuth(ctx, base.getAuthToken());
+        if (authData == null) { return; }
+        GameData gameData = validateGame(ctx, base.getGameID());
+        if (gameData == null) { return; }
+
+        MakeMoveCommand moveCommand = gson.fromJson(rawJson, MakeMoveCommand.class);
+        ChessGame game = gameData.game();
+        if (game.isGameOver()) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+            return;
+        }
+
+        ChessGame.TeamColor playerColor = getPlayerColor(authData.username(), gameData);
+        if (playerColor == null) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot make moves")));
+            return;
+        }
+        if (game.getTeamTurn() != playerColor) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: it is not your turn")));
+            return;
+        }
+
+        try {
+            game.makeMove(moveCommand.getMove());
+            checkGameStatus(game);
+            gameDAO.updateGame(gameData);
+
+            broadcastToAll(base.getGameID(), gson.toJson(new LoadGameMessage(gameData)));
+            String desc = String.format("%s moved from %s to %s", authData.username(),
+                    moveCommand.getMove().getStartPosition(), moveCommand.getMove().getEndPosition());
+            broadcastToOthers(base.getGameID(), ctx.sessionId(), new NotificationMessage(desc));
+            broadcastMoveResults(base.getGameID(), game);
+        } catch (InvalidMoveException e) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
+        }
+    }
+
+    private void broadcastMoveResults(Integer gameId, ChessGame game) {
+        if (game.isGameOver()) {
+            String msg = "The game is over.";
+            if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+                msg = "Checkmate! The game is over.";
+            } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+                msg = "Stalemate! The game is over.";
+            }
+            broadcastToAll(gameId, gson.toJson(new NotificationMessage(msg)));
+        } else if (game.isInCheck(game.getTeamTurn())) {
+            broadcastToAll(gameId, gson.toJson(new NotificationMessage(game.getTeamTurn() + " is in check!")));
+        }
+    }
+
+    private void handleConnect(WsMessageContext ctx, UserGameCommand base) throws DataAccessException {
+        AuthData authData = validateAuth(ctx, base.getAuthToken());
+        if (authData == null) { return; }
+        GameData gameData = validateGame(ctx, base.getGameID());
+        if (gameData == null) { return; }
+
+        String role = "an observer";
+        if (authData.username().equals(gameData.whiteUsername())) { role = "White"; }
+        else if (authData.username().equals(gameData.blackUsername())) { role = "Black"; }
+
+        idMap.computeIfAbsent(base.getGameID(), ignored -> ConcurrentHashMap.newKeySet()).add(ctx);
+        ctx.send(gson.toJson(new LoadGameMessage(gameData)));
+        broadcastToOthers(base.getGameID(), ctx.sessionId(),
+                new NotificationMessage(authData.username() + " has joined the game as " + role));
+    }
+
+    private void handleLeave(WsMessageContext ctx, UserGameCommand base) throws DataAccessException {
+        AuthData authData = validateAuth(ctx, base.getAuthToken());
+        if (authData == null) { return; }
+        GameData gameData = validateGame(ctx, base.getGameID());
+        if (gameData == null) { return; }
+
+        if (authData.username().equals(gameData.whiteUsername())) {
+            gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
+        } else if (authData.username().equals(gameData.blackUsername())) {
+            gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
+        }
+
+        Set<WsContext> sessions = idMap.get(base.getGameID());
+        if (sessions != null) {
+            sessions.removeIf(s -> s.sessionId().equals(ctx.sessionId()));
+            broadcastToAll(base.getGameID(), gson.toJson(new NotificationMessage(authData.username() + " has left.")));
+        }
+    }
+
+    private void handleResign(WsMessageContext ctx, UserGameCommand base) throws DataAccessException {
+        AuthData authData = validateAuth(ctx, base.getAuthToken());
+        if (authData == null) { return; }
+        GameData gameData = validateGame(ctx, base.getGameID());
+        if (gameData == null) { return; }
+
+        if (!authData.username().equals(gameData.whiteUsername()) && !authData.username().equals(gameData.blackUsername())) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
+            return;
+        }
+        if (gameData.game().isGameOver()) {
+            ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+            return;
+        }
+
+        gameData.game().setGameOver(true);
+        gameDAO.updateGame(gameData);
+        broadcastToAll(base.getGameID(), gson.toJson(new NotificationMessage(authData.username() + " resigned. Game over.")));
+    }
+
+    private ChessGame.TeamColor getPlayerColor(String user, GameData data) {
+        if (user.equals(data.whiteUsername())) { return ChessGame.TeamColor.WHITE; }
+        if (user.equals(data.blackUsername())) { return ChessGame.TeamColor.BLACK; }
+        return null;
+    }
+
+    private void checkGameStatus(ChessGame game) {
+        if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK) ||
+                game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+            game.setGameOver(true);
+        }
+    }
+
+    public void onClose(WsCloseContext ctx) {
         String closeId = ctx.sessionId();
-
-        for (Map.Entry<Integer, Set<WsContext>> entry : idMap.entrySet()) {
-            Set<WsContext> gameSessions = entry.getValue();
-            Integer gameId = entry.getKey();
-            gameSessions.removeIf(storedCtx -> storedCtx.sessionId().equals(closeId));
-
-            if (gameSessions.isEmpty()) {
-                idMap.remove(gameId);
-            }
-        }
+        idMap.entrySet().removeIf(entry -> {
+            entry.getValue().removeIf(storedCtx -> storedCtx.sessionId().equals(closeId));
+            return entry.getValue().isEmpty();
+        });
     }
+
     private void broadcastToAll(Integer gameId, String messageJson) {
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
-            for (WsContext s : sessions) {
-                s.send(messageJson);
-            }
+            for (WsContext s : sessions) { s.send(messageJson); }
         }
     }
 
-    private void broadcastToOthers(Integer gameId, String rootSessionId, Object message) {
-        String json = gson.toJson(message);
+    private void broadcastToOthers(Integer gameId, String rootId, Object msg) {
+        String json = gson.toJson(msg);
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
             for (WsContext s : sessions) {
-                if (!s.sessionId().equals(rootSessionId)) {
-                    s.send(json);
-                }
+                if (!s.sessionId().equals(rootId)) { s.send(json); }
             }
         }
     }
 
-    private AuthData validateAuth(WsMessageContext ctx, String authToken) throws DataAccessException {
-        AuthData authData = authDAO.getToken(authToken);
-        if (authData == null) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized")));
-        }
-        return authData;
+    private AuthData validateAuth(WsMessageContext ctx, String token) throws DataAccessException {
+        AuthData auth = authDAO.getToken(token);
+        if (auth == null) { ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized"))); }
+        return auth;
     }
 
-    private GameData validateGame(WsMessageContext ctx, Integer gameID) throws DataAccessException {
-        GameData gameData = gameDAO.getGame(gameID);
-        if (gameData == null) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID")));
-        }
-        return gameData;
+    private GameData validateGame(WsMessageContext ctx, Integer id) throws DataAccessException {
+        GameData game = gameDAO.getGame(id);
+        if (game == null) { ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID"))); }
+        return game;
     }
 }

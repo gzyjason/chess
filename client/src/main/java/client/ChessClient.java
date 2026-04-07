@@ -100,11 +100,11 @@ public class ChessClient implements ServerMessageObserver {
 
 
     private chess.ChessPosition parsePosition(String pos) {
-        if (pos == null || pos.length() != 2) return null;
+        if (pos == null || pos.length() != 2) { return null; }
         pos = pos.toLowerCase();
         int col = pos.charAt(0) - 'a' + 1;
         int row = pos.charAt(1) - '1' + 1;
-        if (col < 1 || col > 8 || row < 1 || row > 8) return null;
+        if (col < 1 || col > 8 || row < 1 || row > 8) { return null; }
         return new chess.ChessPosition(row, col);
     }
 
@@ -165,15 +165,14 @@ public class ChessClient implements ServerMessageObserver {
         drawBoard(playerColor, currentGame, highlights);
     }
     private void printHelpGameplay() {
-        String helpMenu = """
-                redraw: to redraw the chess board.
-                leave: to leave the game and return to the lobby.
-                make <START_POS> <END_POS> [PROMOTION_PIECE]: (e.g., 'make e2 e4' or 'make e7 e8 queen') to make a move.
-                resign: to forfeit the game.
-                highlight <PIECE>: (e.g., 'highlight e2') to see legal moves.
-                help: to see this menu again.
-                """;
-        System.out.println(helpMenu);
+        System.out.print("""
+            redraw: to redraw the chess board.
+            leave: to leave the game and return to the lobby.
+            make <START> <END> [PROMOTION]: (e.g., 'make e2 e4') to move.
+            resign: to forfeit the game.
+            highlight <PIECE>: (e.g., 'highlight e2') to see legal moves.
+            help: to see this menu again.
+            """);
     }
 
     private void handleResign() throws FacadeException {
@@ -222,26 +221,24 @@ public class ChessClient implements ServerMessageObserver {
     }
 
     private void printHelpOut() {
-        String helpMenuOut = """
-                register <USERNAME> <PASSWORD> <EMAIL> - to create an account
-                login <USERNAME> <PASSWORD> - to play chess
-                quit - playing chess
-                help - with possible commands
-                """;
-        System.out.println(helpMenuOut);
+        System.out.print("""
+            register <USERNAME> <PASSWORD> <EMAIL> - to create an account
+            login <USERNAME> <PASSWORD> - to play chess
+            quit - playing chess
+            help - with possible commands
+            """);
     }
 
     private void printHelpIn() {
-        String helpMenuIn = """
-                create <NAME>: to create a game.
-                list: to list games.
-                join <ID> [WHITE|BLACK]: to join a game.
-                observe <ID>: to watch a game.
-                logout: to log out.
-                quit: to exit the program.
-                help: to see this menu again.
-                """;
-        System.out.println(helpMenuIn);
+        System.out.print("""
+            create <NAME>: to create a game.
+            list: to list games.
+            join <ID> [WHITE|BLACK]: to join a game.
+            observe <ID>: to watch a game.
+            logout: to log out.
+            quit: to exit the program.
+            help: to see this menu again.
+            """);
     }
 
     private void handleLogin(String[] tokens) throws FacadeException {

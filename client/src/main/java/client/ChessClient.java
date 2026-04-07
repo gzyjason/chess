@@ -35,7 +35,7 @@ public class ChessClient implements ServerMessageObserver {
     private WebSocketFacade ws;
     private ChessGame.TeamColor playerColor;
     private Integer currentGameID;
-
+    private ChessGame currentGame;
 
     public void run() {
         Scanner scanner = new Scanner(System.in);
@@ -76,7 +76,6 @@ public class ChessClient implements ServerMessageObserver {
                 printHelpGameplay();
                 break;
             case "redraw":
-                // Send a CONNECT command just to trigger a LOAD_GAME response from the server to redraw the board
                 ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
                 break;
             case "leave":
@@ -88,16 +87,80 @@ public class ChessClient implements ServerMessageObserver {
                 handleResign();
                 break;
             case "make":
-                // We will implement handleMakeMove fully later
-                System.out.println("Make move coming soon...");
+                handleMakeMove(tokens);
                 break;
             case "highlight":
-                // We will implement handleHighlight fully later
-                System.out.println("Highlight moves coming soon...");
+                handleHighlight(tokens);
                 break;
         }
     }
 
+
+    private chess.ChessPosition parsePosition(String pos) {
+        if (pos == null || pos.length() != 2) return null;
+        pos = pos.toLowerCase();
+        int col = pos.charAt(0) - 'a' + 1;
+        int row = pos.charAt(1) - '1' + 1;
+        if (col < 1 || col > 8 || row < 1 || row > 8) return null;
+        return new chess.ChessPosition(row, col);
+    }
+
+    private void handleMakeMove(String[] tokens) throws FacadeException {
+        if (tokens.length < 3) {
+            System.out.println("Expected: make <START_POS> <END_POS> [PROMOTION_PIECE] (e.g., make e2 e4)");
+            return;
+        }
+
+        chess.ChessPosition start = parsePosition(tokens[1]);
+        chess.ChessPosition end = parsePosition(tokens[2]);
+
+        if (start == null || end == null) {
+            System.out.println("Invalid positions. Use algebraic notation (e.g., e2 e4).");
+            return;
+        }
+
+        chess.ChessPiece.PieceType promotion = null;
+        if (tokens.length == 4) {
+            try {
+                promotion = chess.ChessPiece.PieceType.valueOf(tokens[3].toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid promotion piece. Options: QUEEN, ROOK, BISHOP, KNIGHT");
+                return;
+            }
+        }
+
+        chess.ChessMove move = new chess.ChessMove(start, end, promotion);
+        ws.sendCommand(new websocket.commands.MakeMoveCommand(authToken, currentGameID, move));
+    }
+
+    private void handleHighlight(String[] tokens) {
+        if (tokens.length != 2) {
+            System.out.println("Expected: highlight <POSITION> (e.g., highlight e2)");
+            return;
+        }
+
+        chess.ChessPosition pos = parsePosition(tokens[1]);
+        if (pos == null) {
+            System.out.println("Invalid position. Use algebraic notation.");
+            return;
+        }
+        if (currentGame == null) {
+            System.out.println("Game state is not loaded yet.");
+            return;
+        }
+
+        java.util.Collection<chess.ChessMove> validMoves = currentGame.validMoves(pos);
+        java.util.Collection<chess.ChessPosition> highlights = new java.util.ArrayList<>();
+
+        highlights.add(pos);
+        if (validMoves != null) {
+            for (chess.ChessMove move : validMoves) {
+                highlights.add(move.getEndPosition());
+            }
+        }
+
+        drawBoard(playerColor, currentGame, highlights);
+    }
     private void printHelpGameplay() {
         String helpMenu = """
                 redraw: to redraw the chess board.
@@ -259,7 +322,6 @@ public class ChessClient implements ServerMessageObserver {
             System.out.println(exception.getMessage());
         } catch (FacadeException exception){
             System.out.println("Error: " + exception.getMessage());
-            // Ensure the state reverts if the socket fails to connect
             this.state = State.SIGNED_IN;
             this.ws = null;
         }
@@ -299,7 +361,12 @@ public class ChessClient implements ServerMessageObserver {
         System.out.println("Logged out successfully");
     }
 
+
+
     private void drawBoard(ChessGame.TeamColor perspective, ChessGame game) {
+        drawBoard(perspective, game, null);
+    }
+    private void drawBoard(ChessGame.TeamColor perspective, ChessGame game, java.util.Collection<ChessPosition> highlights) {
         ChessBoard board = game.getBoard();
 
         int startRow = (perspective == ChessGame.TeamColor.BLACK) ? 1 : 8;
@@ -322,14 +389,25 @@ public class ChessClient implements ServerMessageObserver {
             System.out.print(" " + row + " ");
 
             for (int col = startCol; col != endCol + colDirection; col += colDirection) {
-                if ((row + col) % 2 != 0) {
-                    System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
+                ChessPosition currentPos = new ChessPosition(row, col);
+                boolean isHighlighted = (highlights != null && highlights.contains(currentPos));
+
+                // Change background color if the square is in the highlights collection
+                if (isHighlighted) {
+                    if ((row + col) % 2 != 0) {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_GREEN);
+                    } else {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
+                    }
                 } else {
-                    System.out.print(EscapeSequences.SET_BG_COLOR_BLACK);
+                    if ((row + col) % 2 != 0) {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
+                    } else {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_BLACK);
+                    }
                 }
 
-                // Get piece from the server's current game state
-                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                ChessPiece piece = board.getPiece(currentPos);
                 printPiece(piece);
             }
 
@@ -390,7 +468,9 @@ public class ChessClient implements ServerMessageObserver {
             case LOAD_GAME -> {
                 LoadGameMessage loadMessage = (LoadGameMessage) message;
                 System.out.println("\n");
-                drawBoard(playerColor, loadMessage.getGame().game());
+                this.currentGame = loadMessage.getGame().game();
+
+                drawBoard(playerColor, this.currentGame);
                 printPrompt();
             }
             case NOTIFICATION -> {
@@ -403,6 +483,7 @@ public class ChessClient implements ServerMessageObserver {
                 System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\n" + err.getErrorMessage());
                 printPrompt();
             }
+
         }
     }
 

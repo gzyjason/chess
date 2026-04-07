@@ -5,11 +5,11 @@ import chess.ChessPiece;
 import chess.ChessPosition;
 import model.GameData;
 import ui.EscapeSequences;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
-import client.ServerMessageObserver;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
@@ -19,8 +19,9 @@ public class ChessClient implements ServerMessageObserver {
     ServerFacade serverFacade;
     String authToken;
     private List<GameData> cachedGames;
-
+    private final String serverURL;
     public ChessClient (String serverURL){
+        this.serverURL = serverURL;
         this.serverFacade = new ServerFacade(serverURL);
     }
 
@@ -64,6 +65,56 @@ public class ChessClient implements ServerMessageObserver {
             evalSignedOut(tokens);
         } else if (state == State.SIGNED_IN) {
             evalSignedIn(tokens);
+        } else if (state == State.GAMEPLAY) {
+            evalGameplay(tokens);
+        }
+    }
+
+    private void evalGameplay(String[] tokens) throws FacadeException {
+        switch (tokens[0].toLowerCase()) {
+            case "help":
+                printHelpGameplay();
+                break;
+            case "redraw":
+                // Send a CONNECT command just to trigger a LOAD_GAME response from the server to redraw the board
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
+                break;
+            case "leave":
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, currentGameID));
+                this.state = State.SIGNED_IN;
+                this.ws = null;
+                break;
+            case "resign":
+                handleResign();
+                break;
+            case "make":
+                // We will implement handleMakeMove fully later
+                System.out.println("Make move coming soon...");
+                break;
+            case "highlight":
+                // We will implement handleHighlight fully later
+                System.out.println("Highlight moves coming soon...");
+                break;
+        }
+    }
+
+    private void printHelpGameplay() {
+        String helpMenu = """
+                redraw: to redraw the chess board.
+                leave: to leave the game and return to the lobby.
+                make <MOVE>: (e.g., 'make e2 e4') to make a move.
+                resign: to forfeit the game.
+                highlight <PIECE>: (e.g., 'highlight e2') to see legal moves.
+                help: to see this menu again.
+                """;
+        System.out.println(helpMenu);
+    }
+
+    private void handleResign() throws FacadeException {
+        System.out.print("Are you sure you want to resign? (yes/no): ");
+        Scanner s = new Scanner(System.in);
+        if (s.nextLine().equalsIgnoreCase("yes")) {
+            ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, currentGameID));
         }
     }
 
@@ -195,16 +246,22 @@ public class ChessClient implements ServerMessageObserver {
         }
         try {
             GameData game = getGameFromToken(tokens[1]);
-            ChessGame.TeamColor color = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
-            serverFacade.joinGame(authToken, tokens[2].toUpperCase(), game.gameID());
-            System.out.println("Successfully joined game: " + game);
-            drawBoard(color, game.game());
+            this.currentGameID = game.gameID();
+            this.playerColor = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
+            serverFacade.joinGame(authToken, tokens[2].toUpperCase(), currentGameID);
+            System.out.println("Successfully joined game: " + game.gameName());
+            this.ws = new WebSocketFacade(serverURL, this);
+            ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
+            this.state = State.GAMEPLAY;
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
         } catch (IllegalArgumentException exception) {
             System.out.println(exception.getMessage());
         } catch (FacadeException exception){
             System.out.println("Error: " + exception.getMessage());
+            // Ensure the state reverts if the socket fails to connect
+            this.state = State.SIGNED_IN;
+            this.ws = null;
         }
     }
 

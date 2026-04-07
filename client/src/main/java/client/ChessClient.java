@@ -76,10 +76,13 @@ public class ChessClient implements ServerMessageObserver {
                 printHelpGameplay();
                 break;
             case "redraw":
-                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
+                if (currentGame != null) {
+                    drawBoard(playerColor, currentGame);
+                }
                 break;
             case "leave":
                 ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, currentGameID));
+                ws.close();
                 this.state = State.SIGNED_IN;
                 this.ws = null;
                 break;
@@ -165,7 +168,7 @@ public class ChessClient implements ServerMessageObserver {
         String helpMenu = """
                 redraw: to redraw the chess board.
                 leave: to leave the game and return to the lobby.
-                make <MOVE>: (e.g., 'make e2 e4') to make a move.
+                make <START_POS> <END_POS> [PROMOTION_PIECE]: (e.g., 'make e2 e4' or 'make e7 e8 queen') to make a move.
                 resign: to forfeit the game.
                 highlight <PIECE>: (e.g., 'highlight e2') to see legal moves.
                 help: to see this menu again.
@@ -339,14 +342,19 @@ public class ChessClient implements ServerMessageObserver {
 
         try {
             GameData game = getGameFromToken(tokens[1]);
-            serverFacade.observeGame(authToken, game.gameID());
-            drawBoard(ChessGame.TeamColor.WHITE, game.game());
+            this.currentGameID = game.gameID();
+            this.playerColor = ChessGame.TeamColor.WHITE;
+            this.ws = new WebSocketFacade(serverURL, this);
+            ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
+            this.state = State.GAMEPLAY;
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
         } catch (IllegalArgumentException exception) {
             System.out.println(exception.getMessage());
         } catch (FacadeException exception){
             System.out.println("Error: " + exception.getMessage());
+            this.state = State.SIGNED_IN;
+            this.ws = null;
         }
     }
 

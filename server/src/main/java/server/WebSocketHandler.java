@@ -97,7 +97,13 @@ public class WebSocketHandler {
                         broadcastToOthers(retrievedId, ctx.sessionId(), new NotificationMessage(moveDescription));
 
                         if (game.isGameOver()) {
-                            broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Checkmate! The game is over.")));
+                            if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Checkmate! The game is over.")));
+                            } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Stalemate! The game is over.")));
+                            } else {
+                                broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("The game is over.")));
+                            }
                         } else if (game.isInCheck(game.getTeamTurn())) {
                             broadcastToAll(retrievedId, gson.toJson(new NotificationMessage(game.getTeamTurn() + " is in check!")));
                         }

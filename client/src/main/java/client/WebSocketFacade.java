@@ -56,4 +56,14 @@ public class WebSocketFacade extends Endpoint {
             throw new FacadeException(500, e.getMessage());
         }
     }
+
+    public void close() throws FacadeException {
+        try {
+            if (this.session != null && this.session.isOpen()) {
+                this.session.close();
+            }
+        } catch (IOException e) {
+            throw new FacadeException(500, e.getMessage());
+        }
+    }
 }

@@ -129,14 +129,13 @@ public class WebSocketHandler {
                         role = "Black";
                     }
 
-                    Set<WsContext> sessions = idMap.computeIfAbsent(retrievedId, k -> ConcurrentHashMap.newKeySet());
+                    Set<WsContext> sessions = idMap.computeIfAbsent(retrievedId, ignored -> ConcurrentHashMap.newKeySet());
                     sessions.add(ctx);
 
                     LoadGameMessage loadMessage = new LoadGameMessage(gameData);
                     ctx.send(gson.toJson(loadMessage));
 
                     NotificationMessage notification = new NotificationMessage(username + " has joined the game as " + role);
-                    String notificationJson = gson.toJson(notification);
 
                     broadcastToOthers(retrievedId, ctx.sessionId(), notification);
 

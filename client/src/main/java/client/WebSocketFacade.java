@@ -14,15 +14,13 @@ import java.net.URISyntaxException;
 
 public class WebSocketFacade extends Endpoint {
 
-    private Session session;
-    private final ServerMessageObserver observer;
+    private final Session session;
     private final Gson gson = new Gson();
 
     public WebSocketFacade(String url, ServerMessageObserver observer) throws FacadeException {
         try {
             url = url.replace("http", "ws");
             URI socketURI = new URI(url + "/ws");
-            this.observer = observer;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);

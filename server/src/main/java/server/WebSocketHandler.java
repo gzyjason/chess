@@ -1,5 +1,6 @@
 package server;
 
+import chess.*;
 import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.websocket.*;
@@ -44,7 +45,66 @@ public class WebSocketHandler {
             Integer retrievedId = baseCommand.getGameID();
             switch (baseCommand.getCommandType()){
                 case MAKE_MOVE: {
+                    AuthData authData = validateAuth(ctx, authToken);
+                    if (authData == null) return;
+
+                    GameData gameData = validateGame(ctx, retrievedId);
+                    if (gameData == null) return;
+
                     MakeMoveCommand moveCommand = gson.fromJson(rawJson, MakeMoveCommand.class);
+                    ChessMove move = moveCommand.getMove();
+                    ChessGame game = gameData.game();
+                    String username = authData.username();
+
+                    if (game.isGameOver()) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+                        return;
+                    }
+
+                    ChessGame.TeamColor playerColor = null;
+                    if (username.equals(gameData.whiteUsername())) {
+                        playerColor = ChessGame.TeamColor.WHITE;
+                    } else if (username.equals(gameData.blackUsername())) {
+                        playerColor = ChessGame.TeamColor.BLACK;
+                    }
+
+                    if (playerColor == null) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot make moves")));
+                        return;
+                    }
+
+                    if (game.getTeamTurn() != playerColor) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: it is not your turn")));
+                        return;
+                    }
+
+                    try {
+                        game.makeMove(move);
+
+                        if (game.isInCheckmate(ChessGame.TeamColor.WHITE) || game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+                            game.setGameOver(true);
+                        } else if (game.isInStalemate(ChessGame.TeamColor.WHITE) || game.isInStalemate(ChessGame.TeamColor.BLACK)) {
+                            game.setGameOver(true);
+                        }
+
+                        gameDAO.updateGame(gameData);
+
+                        LoadGameMessage loadMessage = new LoadGameMessage(gameData);
+                        String loadJson = gson.toJson(loadMessage);
+                        broadcastToAll(retrievedId, loadJson);
+
+                        String moveDescription = String.format("%s moved from %s to %s", username, move.getStartPosition(), move.getEndPosition());
+                        broadcastToOthers(retrievedId, ctx.sessionId(), new NotificationMessage(moveDescription));
+
+                        if (game.isGameOver()) {
+                            broadcastToAll(retrievedId, gson.toJson(new NotificationMessage("Checkmate! The game is over.")));
+                        } else if (game.isInCheck(game.getTeamTurn())) {
+                            broadcastToAll(retrievedId, gson.toJson(new NotificationMessage(game.getTeamTurn() + " is in check!")));
+                        }
+
+                    } catch (InvalidMoveException e) {
+                        ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
+                    }
                     break;
                 }
 
@@ -164,6 +224,26 @@ public class WebSocketHandler {
 
             if (gameSessions.isEmpty()) {
                 idMap.remove(gameId);
+            }
+        }
+    }
+    private void broadcastToAll(Integer gameId, String messageJson) {
+        Set<WsContext> sessions = idMap.get(gameId);
+        if (sessions != null) {
+            for (WsContext s : sessions) {
+                s.send(messageJson);
+            }
+        }
+    }
+
+    private void broadcastToOthers(Integer gameId, String rootSessionId, Object message) {
+        String json = gson.toJson(message);
+        Set<WsContext> sessions = idMap.get(gameId);
+        if (sessions != null) {
+            for (WsContext s : sessions) {
+                if (!s.sessionId().equals(rootSessionId)) {
+                    s.send(json);
+                }
             }
         }
     }

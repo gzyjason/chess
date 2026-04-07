@@ -142,8 +142,21 @@ public class Server {
     }
 
     public int run(int desiredPort) {
-        javalin.start(desiredPort);
-        return javalin.port();
+        Javalin app = Javalin.create(config -> {
+            config.staticFiles.add("/public");
+        });
+
+        app.ws("/ws", ws -> {
+            ws.onConnect(webSocketHandler::onConnect);
+            ws.onMessage(webSocketHandler::onMessage);
+            ws.onClose(webSocketHandler::onClose);
+            ws.onError(ctx -> System.out.println("WebSocket Error: " + ctx.error()));
+        });
+
+        app.get("/game", ctx -> ctx.result("HTTP Endpoint Active"));
+
+        app.start(desiredPort);
+        return app.port();
     }
 
     public void stop() {

@@ -5,13 +5,17 @@ import chess.ChessPiece;
 import chess.ChessPosition;
 import model.GameData;
 import ui.EscapeSequences;
-
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
+import client.ServerMessageObserver;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.List;
 
-public class ChessClient {
+public class ChessClient implements ServerMessageObserver {
     ServerFacade serverFacade;
     String authToken;
     private List<GameData> cachedGames;
@@ -22,10 +26,15 @@ public class ChessClient {
 
     public enum State {
         SIGNED_OUT,
-        SIGNED_IN
+        SIGNED_IN,
+        GAMEPLAY
     }
 
     private State state = State.SIGNED_OUT;
+    private WebSocketFacade ws;
+    private ChessGame.TeamColor playerColor;
+    private Integer currentGameID;
+
 
     public void run() {
         Scanner scanner = new Scanner(System.in);
@@ -189,7 +198,7 @@ public class ChessClient {
             ChessGame.TeamColor color = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
             serverFacade.joinGame(authToken, tokens[2].toUpperCase(), game.gameID());
             System.out.println("Successfully joined game: " + game);
-            drawBoard(color);
+            drawBoard(color, game.game());
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
         } catch (IllegalArgumentException exception) {
@@ -212,7 +221,7 @@ public class ChessClient {
         try {
             GameData game = getGameFromToken(tokens[1]);
             serverFacade.observeGame(authToken, game.gameID());
-            drawBoard(ChessGame.TeamColor.WHITE);
+            drawBoard(ChessGame.TeamColor.WHITE, game.game());
         } catch (NumberFormatException exception) {
             System.out.println("ID must be an integer");
         } catch (IllegalArgumentException exception) {
@@ -233,9 +242,8 @@ public class ChessClient {
         System.out.println("Logged out successfully");
     }
 
-    private void drawBoard(ChessGame.TeamColor perspective) {
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
+    private void drawBoard(ChessGame.TeamColor perspective, ChessGame game) {
+        ChessBoard board = game.getBoard();
 
         int startRow = (perspective == ChessGame.TeamColor.BLACK) ? 1 : 8;
         int endRow = (perspective == ChessGame.TeamColor.BLACK) ? 8 : 1;
@@ -263,6 +271,7 @@ public class ChessClient {
                     System.out.print(EscapeSequences.SET_BG_COLOR_BLACK);
                 }
 
+                // Get piece from the server's current game state
                 ChessPiece piece = board.getPiece(new ChessPosition(row, col));
                 printPiece(piece);
             }
@@ -316,5 +325,31 @@ public class ChessClient {
             throw new IllegalArgumentException("Invalid game number");
         }
         return cachedGames.get(index);
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                LoadGameMessage loadMessage = (LoadGameMessage) message;
+                System.out.println("\n");
+                drawBoard(playerColor, loadMessage.getGame().game());
+                printPrompt();
+            }
+            case NOTIFICATION -> {
+                NotificationMessage notif = (NotificationMessage) message;
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + "\n" + notif.getMessage());
+                printPrompt();
+            }
+            case ERROR -> {
+                ErrorMessage err = (ErrorMessage) message;
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\n" + err.getErrorMessage());
+                printPrompt();
+            }
+        }
+    }
+
+    private void printPrompt() {
+        System.out.print("\n[" + state + "] >>> ");
     }
 }

@@ -1,6 +1,8 @@
 package client;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import websocket.messages.ErrorMessage;
@@ -25,12 +27,19 @@ public class WebSocketFacade extends Endpoint {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
 
-            this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
-                ServerMessage serverMessage = deserialize(message);
-                observer.notify(serverMessage);
+            this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+                @Override
+                public void onMessage(String message) {
+                    try {
+                        ServerMessage serverMessage = deserialize(message);
+                        observer.notify(serverMessage);
+                    } catch (Exception exception) {
+                        System.out.println("WebSocket Error: " + exception.getMessage());
+                    }
+                }
             });
-        } catch (DeploymentException | IOException | URISyntaxException e) {
-            throw new FacadeException(500, e.getMessage());
+        } catch (DeploymentException | IOException | URISyntaxException exception) {
+            throw new FacadeException(500, exception.getMessage());
         }
     }
 
@@ -39,9 +48,18 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private ServerMessage deserialize(String json) {
-        ServerMessage base = gson.fromJson(json, ServerMessage.class);
-        return switch (base.getServerMessageType()) {
-            case LOAD_GAME -> gson.fromJson(json, LoadGameMessage.class);
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+        String typeString = jsonObject.get("serverMessageType").getAsString();
+        ServerMessage.ServerMessageType type = ServerMessage.ServerMessageType.valueOf(typeString);
+
+        return switch (type) {
+            case LOAD_GAME -> {
+                JsonObject gameObject = jsonObject.getAsJsonObject("game");
+                if (gameObject != null && gameObject.has("game")) {
+                    jsonObject.add("game", gameObject.get("game"));
+                }
+                yield gson.fromJson(jsonObject, LoadGameMessage.class);
+            }
             case ERROR -> gson.fromJson(json, ErrorMessage.class);
             case NOTIFICATION -> gson.fromJson(json, NotificationMessage.class);
         };
@@ -50,8 +68,8 @@ public class WebSocketFacade extends Endpoint {
     public void sendCommand(UserGameCommand command) throws FacadeException {
         try {
             this.session.getBasicRemote().sendText(gson.toJson(command));
-        } catch (IOException e) {
-            throw new FacadeException(500, e.getMessage());
+        } catch (IOException exception) {
+            throw new FacadeException(500, exception.getMessage());
         }
     }
 
@@ -60,8 +78,8 @@ public class WebSocketFacade extends Endpoint {
             if (this.session != null && this.session.isOpen()) {
                 this.session.close();
             }
-        } catch (IOException e) {
-            throw new FacadeException(500, e.getMessage());
+        } catch (IOException exception) {
+            throw new FacadeException(500, exception.getMessage());
         }
     }
 }

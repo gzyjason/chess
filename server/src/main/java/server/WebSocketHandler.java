@@ -12,13 +12,18 @@ import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 
-import java.time.Duration;import java.util.Set;
+import java.time.Duration;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
+    private static final Logger logger = Logger.getLogger(WebSocketHandler.class.getName());
     ConcurrentHashMap<Integer, Set<WsContext>> idMap = new ConcurrentHashMap<>();
 
     public WebSocketHandler(AuthDAO authDAO, GameDAO gameDAO) {
@@ -42,7 +47,12 @@ public class WebSocketHandler {
                 case RESIGN -> handleResign(ctx, baseCommand);
             }
         } catch (Exception exception) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: invalid format")));
+            // Replaces exception.printStackTrace()
+            logger.log(Level.SEVERE, "WebSocket error occurred", exception);
+
+            if (ctx.session.isOpen()) {
+                ctx.send(gson.toJson(new ErrorMessage("Error: " + exception.getMessage())));
+            }
         }
     }
 
@@ -72,11 +82,12 @@ public class WebSocketHandler {
         try {
             game.makeMove(moveCommand.getMove());
             checkGameStatus(game);
-            gameDAO.updateGame(gameData);
+            gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game));
 
-            broadcastToAll(base.getGameID(), gson.toJson(new LoadGameMessage(gameData)));
             String desc = String.format("%s moved from %s to %s", authData.username(),
                     moveCommand.getMove().getStartPosition(), moveCommand.getMove().getEndPosition());
+
+            broadcastToAll(base.getGameID(), gson.toJson(new LoadGameMessage(game)));
             broadcastToOthers(base.getGameID(), ctx.sessionId(), new NotificationMessage(desc));
             broadcastMoveResults(base.getGameID(), game);
         } catch (InvalidMoveException e) {
@@ -105,13 +116,14 @@ public class WebSocketHandler {
         if (gameData == null) { return; }
 
         String role = "an observer";
-        if (authData.username().equals(gameData.whiteUsername())) { role = "White"; }
-        else if (authData.username().equals(gameData.blackUsername())) { role = "Black"; }
+        if (Objects.equals(authData.username(), gameData.whiteUsername())) { role = "White"; }
+        else if (Objects.equals(authData.username(), gameData.blackUsername())) { role = "Black"; }
 
         idMap.computeIfAbsent(base.getGameID(), ignored -> ConcurrentHashMap.newKeySet()).add(ctx);
-        ctx.send(gson.toJson(new LoadGameMessage(gameData)));
-        broadcastToOthers(base.getGameID(), ctx.sessionId(),
-                new NotificationMessage(authData.username() + " has joined the game as " + role));
+        ctx.send(gson.toJson(new LoadGameMessage(gameData.game())));
+
+        NotificationMessage notif = new NotificationMessage(authData.username() + " has joined the game as " + role);
+        broadcastToOthers(base.getGameID(), ctx.sessionId(), notif);
     }
 
     private void handleLeave(WsMessageContext ctx, UserGameCommand base) throws DataAccessException {
@@ -120,9 +132,9 @@ public class WebSocketHandler {
         GameData gameData = validateGame(ctx, base.getGameID());
         if (gameData == null) { return; }
 
-        if (authData.username().equals(gameData.whiteUsername())) {
+        if (Objects.equals(authData.username(), gameData.whiteUsername())) {
             gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
-        } else if (authData.username().equals(gameData.blackUsername())) {
+        } else if (Objects.equals(authData.username(), gameData.blackUsername())) {
             gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
         }
 
@@ -139,7 +151,7 @@ public class WebSocketHandler {
         GameData gameData = validateGame(ctx, base.getGameID());
         if (gameData == null) { return; }
 
-        if (!authData.username().equals(gameData.whiteUsername()) && !authData.username().equals(gameData.blackUsername())) {
+        if (!Objects.equals(authData.username(), gameData.whiteUsername()) && !Objects.equals(authData.username(), gameData.blackUsername())) {
             ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
             return;
         }
@@ -149,13 +161,13 @@ public class WebSocketHandler {
         }
 
         gameData.game().setGameOver(true);
-        gameDAO.updateGame(gameData);
+        gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), gameData.game()));
         broadcastToAll(base.getGameID(), gson.toJson(new NotificationMessage(authData.username() + " resigned. Game over.")));
     }
 
     private ChessGame.TeamColor getPlayerColor(String user, GameData data) {
-        if (user.equals(data.whiteUsername())) { return ChessGame.TeamColor.WHITE; }
-        if (user.equals(data.blackUsername())) { return ChessGame.TeamColor.BLACK; }
+        if (Objects.equals(user, data.whiteUsername())) { return ChessGame.TeamColor.WHITE; }
+        if (Objects.equals(user, data.blackUsername())) { return ChessGame.TeamColor.BLACK; }
         return null;
     }
 
@@ -177,7 +189,11 @@ public class WebSocketHandler {
     private void broadcastToAll(Integer gameId, String messageJson) {
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
-            for (WsContext s : sessions) { s.send(messageJson); }
+            for (WsContext s : sessions) {
+                if (s.session.isOpen()) {
+                    s.send(messageJson);
+                }
+            }
         }
     }
 
@@ -186,20 +202,22 @@ public class WebSocketHandler {
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
             for (WsContext s : sessions) {
-                if (!s.sessionId().equals(rootId)) { s.send(json); }
+                if (s.session.isOpen() && !s.sessionId().equals(rootId)) {
+                    s.send(json);
+                }
             }
         }
     }
 
     private AuthData validateAuth(WsMessageContext ctx, String token) throws DataAccessException {
         AuthData auth = authDAO.getToken(token);
-        if (auth == null) { ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized"))); }
+        if (auth == null && ctx.session.isOpen()) { ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized"))); }
         return auth;
     }
 
     private GameData validateGame(WsMessageContext ctx, Integer id) throws DataAccessException {
         GameData game = gameDAO.getGame(id);
-        if (game == null) { ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID"))); }
+        if (game == null && ctx.session.isOpen()) { ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID"))); }
         return game;
     }
 }

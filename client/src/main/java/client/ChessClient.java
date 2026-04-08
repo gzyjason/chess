@@ -1,4 +1,5 @@
 package client;
+
 import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
@@ -10,6 +11,7 @@ import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
+
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
@@ -20,6 +22,7 @@ public class ChessClient implements ServerMessageObserver {
     String authToken;
     private List<GameData> cachedGames;
     private final String serverURL;
+
     public ChessClient (String serverURL){
         this.serverURL = serverURL;
         this.serverFacade = new ServerFacade(serverURL);
@@ -76,8 +79,10 @@ public class ChessClient implements ServerMessageObserver {
                 printHelpGameplay();
                 break;
             case "redraw":
-                if (currentGame != null) {
+                if (currentGame != null && currentGame.getBoard() != null) {
                     drawBoard(playerColor, currentGame);
+                } else {
+                    System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "No valid game loaded to redraw.");
                 }
                 break;
             case "leave":
@@ -97,7 +102,6 @@ public class ChessClient implements ServerMessageObserver {
                 break;
         }
     }
-
 
     private chess.ChessPosition parsePosition(String pos) {
         if (pos == null || pos.length() != 2) { return null; }
@@ -164,6 +168,7 @@ public class ChessClient implements ServerMessageObserver {
 
         drawBoard(playerColor, currentGame, highlights);
     }
+
     private void printHelpGameplay() {
         System.out.print("""
             redraw: to redraw the chess board.
@@ -303,7 +308,7 @@ public class ChessClient implements ServerMessageObserver {
             System.out.println("Please 'list' games before attempting to join or observe");
             return;
         }
-        if (!Objects.equals(tokens[2], "WHITE") && !Objects.equals(tokens[2], "BLACK")) {
+        if (!Objects.equals(tokens[2].toUpperCase(), "WHITE") && !Objects.equals(tokens[2].toUpperCase(), "BLACK")) {
             System.out.println("Second argument must be either 'WHITE' or 'BLACK'");
             return;
         }
@@ -366,11 +371,10 @@ public class ChessClient implements ServerMessageObserver {
         System.out.println("Logged out successfully");
     }
 
-
-
     private void drawBoard(ChessGame.TeamColor perspective, ChessGame game) {
         drawBoard(perspective, game, null);
     }
+
     private void drawBoard(ChessGame.TeamColor perspective, ChessGame game, java.util.Collection<ChessPosition> highlights) {
         ChessBoard board = game.getBoard();
 
@@ -397,7 +401,6 @@ public class ChessClient implements ServerMessageObserver {
                 ChessPosition currentPos = new ChessPosition(row, col);
                 boolean isHighlighted = (highlights != null && highlights.contains(currentPos));
 
-                // Change background color if the square is in the highlights collection
                 if (isHighlighted) {
                     if ((row + col) % 2 != 0) {
                         System.out.print(EscapeSequences.SET_BG_COLOR_GREEN);
@@ -469,30 +472,41 @@ public class ChessClient implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        switch (message.getServerMessageType()) {
-            case LOAD_GAME -> {
-                LoadGameMessage loadMessage = (LoadGameMessage) message;
-                System.out.println("\n");
-                this.currentGame = loadMessage.getGame().game();
+        try {
+            switch (message.getServerMessageType()) {
+                case LOAD_GAME -> {
+                    LoadGameMessage loadMessage = (LoadGameMessage) message;
+                    System.out.println();
+                    this.currentGame = loadMessage.getGame();
 
-                drawBoard(playerColor, this.currentGame);
-                printPrompt();
+                    if (this.currentGame == null) {
+                        System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Data Error: The server sent an empty game state. Verify your GameService creates a valid new ChessGame().");
+                    } else if (this.currentGame.getBoard() == null) {
+                        System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Data Error: The ChessBoard inside the game is null. Verify your DAO deserialization logic.");
+                    } else {
+                        drawBoard(playerColor, this.currentGame);
+                    }
+                    printPrompt();
+                }
+                case NOTIFICATION -> {
+                    NotificationMessage notif = (NotificationMessage) message;
+                    System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + "\n" + notif.getMessage());
+                    printPrompt();
+                }
+                case ERROR -> {
+                    ErrorMessage err = (ErrorMessage) message;
+                    System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\n" + err.getErrorMessage());
+                    printPrompt();
+                }
             }
-            case NOTIFICATION -> {
-                NotificationMessage notif = (NotificationMessage) message;
-                System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + "\n" + notif.getMessage());
-                printPrompt();
-            }
-            case ERROR -> {
-                ErrorMessage err = (ErrorMessage) message;
-                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\n" + err.getErrorMessage());
-                printPrompt();
-            }
-
+        } catch (Exception exception) {
+            System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\nUI Rendering Error: " + exception.getMessage());
+            printPrompt();
         }
     }
 
     private void printPrompt() {
         System.out.print("\n[" + state + "] >>> ");
+        System.out.flush();
     }
 }

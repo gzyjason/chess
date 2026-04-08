@@ -23,7 +23,7 @@ public class WebSocketHandler {
     private final Gson gson = new Gson();
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
-    private static final Logger logger = Logger.getLogger(WebSocketHandler.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(WebSocketHandler.class.getName());
     ConcurrentHashMap<Integer, Set<WsContext>> idMap = new ConcurrentHashMap<>();
 
     public WebSocketHandler(AuthDAO authDAO, GameDAO gameDAO) {
@@ -47,9 +47,7 @@ public class WebSocketHandler {
                 case RESIGN -> handleResign(ctx, baseCommand);
             }
         } catch (Exception exception) {
-            // Replaces exception.printStackTrace()
-            logger.log(Level.SEVERE, "WebSocket error occurred", exception);
-
+            LOGGER.log(Level.SEVERE, "WebSocket error occurred", exception);
             if (ctx.session.isOpen()) {
                 ctx.send(gson.toJson(new ErrorMessage("Error: " + exception.getMessage())));
             }

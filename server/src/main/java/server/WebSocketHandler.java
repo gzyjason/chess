@@ -32,7 +32,7 @@ public class WebSocketHandler {
     }
 
     public void onConnect(WsConnectContext ctx) {
-        ctx.session.setIdleTimeout(Duration.ofSeconds(30));
+        ctx.session.setIdleTimeout(Duration.ofMinutes(5));
         System.out.println("New WebSocket connection established: " + ctx.sessionId());
     }
 
@@ -93,7 +93,10 @@ public class WebSocketHandler {
             broadcastToOthers(base.getGameID(), ctx.sessionId(), new NotificationMessage(desc));
             broadcastMoveResults(base.getGameID(), game);
         } catch (InvalidMoveException e) {
-            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: invalid move")));
+            String detail = (e.getMessage() != null && !e.getMessage().isEmpty())
+                    ? e.getMessage()
+                    : "Invalid move.";
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: " + detail)));
         }
     }
 

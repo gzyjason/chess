@@ -94,6 +94,10 @@ public class ChessClient implements ServerMessageObserver {
             case "highlight":
                 handleHighlight(tokens);
                 break;
+            case "quit":
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, currentGameID));
+                ws.close();
+                break;
         }
     }
 

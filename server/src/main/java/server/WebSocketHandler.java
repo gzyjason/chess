@@ -48,8 +48,12 @@ public class WebSocketHandler {
             }
         } catch (Exception exception) {
             LOGGER.log(Level.SEVERE, "WebSocket error occurred", exception);
-            if (ctx.session.isOpen()) {
-                ctx.send(gson.toJson(new ErrorMessage("Error: " + exception.getMessage())));
+            try {
+                if (ctx.session.isOpen()) {
+                    ctx.send(gson.toJson(new ErrorMessage("Error: " + exception.getMessage())));
+                }
+            } catch (Exception sendException) {
+                LOGGER.log(Level.WARNING, "Failed to dispatch error response", sendException);
             }
         }
     }
@@ -63,17 +67,17 @@ public class WebSocketHandler {
         MakeMoveCommand moveCommand = gson.fromJson(rawJson, MakeMoveCommand.class);
         ChessGame game = gameData.game();
         if (game.isGameOver()) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: the game is already over")));
             return;
         }
 
         ChessGame.TeamColor playerColor = getPlayerColor(authData.username(), gameData);
         if (playerColor == null) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot make moves")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: observers cannot make moves")));
             return;
         }
         if (game.getTeamTurn() != playerColor) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: it is not your turn")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: it is not your turn")));
             return;
         }
 
@@ -89,7 +93,7 @@ public class WebSocketHandler {
             broadcastToOthers(base.getGameID(), ctx.sessionId(), new NotificationMessage(desc));
             broadcastMoveResults(base.getGameID(), game);
         } catch (InvalidMoveException e) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: invalid move")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: invalid move")));
         }
     }
 
@@ -118,7 +122,7 @@ public class WebSocketHandler {
         else if (Objects.equals(authData.username(), gameData.blackUsername())) { role = "Black"; }
 
         idMap.computeIfAbsent(base.getGameID(), ignored -> ConcurrentHashMap.newKeySet()).add(ctx);
-        ctx.send(gson.toJson(new LoadGameMessage(gameData.game())));
+        sendSafe(ctx, gson.toJson(new LoadGameMessage(gameData.game())));
 
         NotificationMessage notif = new NotificationMessage(authData.username() + " has joined the game as " + role);
         broadcastToOthers(base.getGameID(), ctx.sessionId(), notif);
@@ -130,10 +134,14 @@ public class WebSocketHandler {
         GameData gameData = validateGame(ctx, base.getGameID());
         if (gameData == null) { return; }
 
-        if (Objects.equals(authData.username(), gameData.whiteUsername())) {
-            gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
-        } else if (Objects.equals(authData.username(), gameData.blackUsername())) {
-            gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
+        try {
+            if (Objects.equals(authData.username(), gameData.whiteUsername())) {
+                gameDAO.updateGame(new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
+            } else if (Objects.equals(authData.username(), gameData.blackUsername())) {
+                gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
+            }
+        } catch (Exception exception) {
+            LOGGER.log(Level.WARNING, "Failed to release player slot during leave sequence", exception);
         }
 
         Set<WsContext> sessions = idMap.get(base.getGameID());
@@ -150,11 +158,11 @@ public class WebSocketHandler {
         if (gameData == null) { return; }
 
         if (!Objects.equals(authData.username(), gameData.whiteUsername()) && !Objects.equals(authData.username(), gameData.blackUsername())) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: observers cannot resign")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: observers cannot resign")));
             return;
         }
         if (gameData.game().isGameOver()) {
-            ctx.send(gson.toJson(new ErrorMessage("Error: the game is already over")));
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: the game is already over")));
             return;
         }
 
@@ -188,9 +196,7 @@ public class WebSocketHandler {
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
             for (WsContext s : sessions) {
-                if (s.session.isOpen()) {
-                    s.send(messageJson);
-                }
+                sendSafe(s, messageJson);
             }
         }
     }
@@ -200,22 +206,36 @@ public class WebSocketHandler {
         Set<WsContext> sessions = idMap.get(gameId);
         if (sessions != null) {
             for (WsContext s : sessions) {
-                if (s.session.isOpen() && !s.sessionId().equals(rootId)) {
-                    s.send(json);
+                if (!s.sessionId().equals(rootId)) {
+                    sendSafe(s, json);
                 }
             }
         }
     }
 
+    private void sendSafe(WsContext ctx, String message) {
+        try {
+            if (ctx.session.isOpen()) {
+                ctx.send(message);
+            }
+        } catch (Exception exception) {
+            LOGGER.log(Level.WARNING, "Failed to transmit message to client", exception);
+        }
+    }
+
     private AuthData validateAuth(WsMessageContext ctx, String token) throws DataAccessException {
         AuthData auth = authDAO.getToken(token);
-        if (auth == null && ctx.session.isOpen()) { ctx.send(gson.toJson(new ErrorMessage("Error: unauthorized"))); }
+        if (auth == null) {
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: unauthorized")));
+        }
         return auth;
     }
 
     private GameData validateGame(WsMessageContext ctx, Integer id) throws DataAccessException {
         GameData game = gameDAO.getGame(id);
-        if (game == null && ctx.session.isOpen()) { ctx.send(gson.toJson(new ErrorMessage("Error: bad game ID"))); }
+        if (game == null) {
+            sendSafe(ctx, gson.toJson(new ErrorMessage("Error: bad game ID")));
+        }
         return game;
     }
 }

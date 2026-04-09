@@ -10,7 +10,6 @@ public class ChessPosition {
 
     private final int row;
     private final int col;
-
     public ChessPosition(int row, int col) {
         this.row = row;
         this.col = col;
@@ -43,15 +42,15 @@ public class ChessPosition {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || getClass( ) != o.getClass()) {
             return false;
         }
-        ChessPosition that = (ChessPosition) o;
+        ChessPosition that =  (ChessPosition) o;
         return row == that.row && col == that.col;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode( ) {
         return 31 * row + col;
     }
 }

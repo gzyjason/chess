@@ -1,5 +1,4 @@
 package chess;
-
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -10,11 +9,8 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessBoard {
-
     private ChessPiece[][] squares = new ChessPiece[8][8];
-
     public ChessBoard() {
-        
     }
 
     /**
@@ -46,9 +42,7 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-
         this.squares = new ChessPiece[8][8];
-
         squares[0][0] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK);
         squares[0][1] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT);
         squares[0][2] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP);
@@ -81,6 +75,8 @@ public class ChessBoard {
         squares[6][5] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
         squares[6][6] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
         squares[6][7] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
+
+
 
 
 
@@ -120,7 +116,7 @@ public class ChessBoard {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode( ) {
         return Arrays.deepHashCode(squares);
     }
 }

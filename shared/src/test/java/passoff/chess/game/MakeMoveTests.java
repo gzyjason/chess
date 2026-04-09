@@ -318,7 +318,7 @@ public class MakeMoveTests {
                 |R|P|P| | |P|P|P|
                 | |N|B|Q|K| |R| |
                 """));
-        //try to make an otherwise valid move that doesn't remove check
+        //try to make an otherwise validMoves move that doesn't remove check
         Assertions.assertThrows(InvalidMoveException.class,
                 () -> game.makeMove(new ChessMove(new ChessPosition(1, 7), new ChessPosition(1, 8), null)));
     }

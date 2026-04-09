@@ -94,7 +94,7 @@ public class WebSocketTests {
     public void validMove() {
         setupNormalGame();
 
-        //make a valid pawn move
+        //make a validMoves pawn move
         ChessMove move = new ChessMove(new ChessPosition(2, 5), new ChessPosition(3, 5), null);
         makeMove(white, gameID, move,true, false, Set.of(black, observer), Set.of(), "move made");
     }
@@ -105,7 +105,7 @@ public class WebSocketTests {
     public void makeMoveBadAuthtoken() {
         setupNormalGame();
 
-        //make valid move command with wrong authtoken
+        //make validMoves move command with wrong authtoken
         ChessMove move = new ChessMove(new ChessPosition(2, 6), new ChessPosition(4, 6), null);
         makeMove(new WebsocketUser(white.username(), "badAuth"), gameID, move, false, false,
                 Set.of(black, observer), Set.of(), "move made with bad authtoken");
@@ -128,7 +128,7 @@ public class WebSocketTests {
     public void invalidMoveWrongTurn() {
         setupNormalGame();
 
-        //try to move pawn out of turn - would be valid if in turn
+        //try to move pawn out of turn - would be validMoves if in turn
         ChessMove move = new ChessMove(new ChessPosition(7, 5), new ChessPosition(5, 5), null);
         makeMove(black, gameID, move, false, false, Set.of(white, observer), Set.of(), "move made out of turn");
     }
@@ -150,7 +150,7 @@ public class WebSocketTests {
     public void invalidMoveObserver() {
         setupNormalGame();
 
-        //have observer attempt to make an otherwise valid move
+        //have observer attempt to make an otherwise validMoves move
         ChessMove move = new ChessMove(new ChessPosition(2, 5), new ChessPosition(4, 5), null);
         makeMove(observer, gameID, move, false, false, Set.of(white, black), Set.of(), "observer attempts move");
     }

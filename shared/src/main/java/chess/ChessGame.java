@@ -25,7 +25,7 @@ public class ChessGame {
         BLACK
     }
 
-    public Collection<ChessMove> valid(ChessPosition startPosition) {
+    public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(startPosition);
 
@@ -53,7 +53,7 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(move.startPosition());
-        Collection<ChessMove> legalMoves = valid(move.startPosition());
+        Collection<ChessMove> legalMoves = validMoves(move.startPosition());
 
         if (piece == null) {
             throw new InvalidMoveException("There is no piece at the selected start position.");
@@ -122,7 +122,7 @@ public class ChessGame {
                 ChessPosition myPosition = new ChessPosition(row, col);
                 ChessPiece piece = getBoard().getPiece(myPosition);
                 if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> legalMoves = valid(myPosition);
+                    Collection<ChessMove> legalMoves = validMoves(myPosition);
                     if (legalMoves != null && !legalMoves.isEmpty()) {
                         return false;
                     }

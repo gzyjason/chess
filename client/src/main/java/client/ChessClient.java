@@ -77,7 +77,7 @@ public class  ChessClient  implements ServerMessageObserver {
                 if (currentGame != null && currentGame.getBoard() != null) {
                     drawBoard(playerColor, currentGame);
                 } else {
-                    System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "No valid game loaded to redraw.");
+                    System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "No validMoves game loaded to redraw.");
                 }
                 break;
             case "leave":
@@ -152,7 +152,7 @@ public class  ChessClient  implements ServerMessageObserver {
             System.out.println("Game state is not loaded yet.");
             return;
         }
-        java.util.Collection<chess.ChessMove> validMoves = currentGame.valid(pos);
+        java.util.Collection<chess.ChessMove> validMoves = currentGame.validMoves(pos);
         java.util.Collection<chess.ChessPosition> highlights = new java.util.ArrayList<>();
         highlights.add(pos);
         if (validMoves !=  null) {
@@ -170,7 +170,7 @@ public class  ChessClient  implements ServerMessageObserver {
                 "leave: return to lobby\n" +
                 "make <START> <END> [PROMOTION]: move\n" +
                 "resign: forfeit game\n" +
-                "highlight <PIECE>: see valid moves\n" +
+                "highlight <PIECE>: see validMoves moves\n" +
                 "help: see menu\n");
     }
 

@@ -61,7 +61,7 @@ public class ChessGameTests extends EqualsTestingUtility<ChessGame> {
             differentGames.add(game4);
 
         } catch (InvalidMoveException e) {
-            throw new RuntimeException("All moves in ChessGameTests are valid and should be allowed.", e);
+            throw new RuntimeException("All moves in ChessGameTests are validMoves and should be allowed.", e);
         }
 
         return differentGames;

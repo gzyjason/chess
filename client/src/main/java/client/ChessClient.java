@@ -11,32 +11,29 @@ import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
-
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.List;
 
-public class ChessClient implements ServerMessageObserver {
+public class  ChessClient  implements ServerMessageObserver {
     ServerFacade serverFacade;
     String authToken;
-    private List<GameData> cachedGames;
-    private final String serverURL;
-
+    private List<GameData>  cachedGames;
+    private final String  serverURL ;
     public ChessClient (String serverURL){
         this.serverURL = serverURL;
+
         this.serverFacade = new ServerFacade(serverURL);
     }
-
     public enum State { SIGNED_OUT, SIGNED_IN, GAMEPLAY }
-
     private State state = State.SIGNED_OUT;
     private WebSocketFacade ws;
     private ChessGame.TeamColor playerColor;
     private Integer currentGameID;
     private ChessGame currentGame;
 
-    public void run() {
+    public void run( ){
         Scanner scanner = new Scanner(System.in);
         String input = "";
         while (!input.equalsIgnoreCase("quit")) {
@@ -45,9 +42,12 @@ public class ChessClient implements ServerMessageObserver {
             String[] splitInput = input.split("\\s+");
             try {
                 eval(splitInput);
+
             } catch(FacadeException exception) {
+
                 System.out.println("Error: " + exception.getMessage());
             } catch (Exception exception){
+
                 System.out.println("An unexpected error occurred: " + exception.getMessage());
             }
         }
@@ -59,18 +59,19 @@ public class ChessClient implements ServerMessageObserver {
             return;
         }
         if (state == State.SIGNED_OUT) {
-            evalSignedOut(tokens);
+            signingOut(tokens);
         } else if (state == State.SIGNED_IN) {
-            evalSignedIn(tokens);
+            signingIn(tokens);
         } else if (state == State.GAMEPLAY) {
             evalGameplay(tokens);
         }
     }
 
     private void evalGameplay(String[] tokens) throws FacadeException {
-        switch (tokens[0].toLowerCase()) {
+        switch (tokens[0].toLowerCase( ) ) {
             case "help":
-                printHelpGameplay();
+
+                printGameHelper( );
                 break;
             case "redraw":
                 if (currentGame != null && currentGame.getBoard() != null) {
@@ -86,7 +87,7 @@ public class ChessClient implements ServerMessageObserver {
                 this.ws = null;
                 break;
             case "resign":
-                handleResign();
+                resignHandler();
                 break;
             case "make":
                 handleMakeMove(tokens);
@@ -151,18 +152,20 @@ public class ChessClient implements ServerMessageObserver {
             System.out.println("Game state is not loaded yet.");
             return;
         }
-        java.util.Collection<chess.ChessMove> validMoves = currentGame.validMoves(pos);
+        java.util.Collection<chess.ChessMove> validMoves = currentGame.legal(pos);
         java.util.Collection<chess.ChessPosition> highlights = new java.util.ArrayList<>();
         highlights.add(pos);
-        if (validMoves != null) {
-            for (chess.ChessMove move : validMoves) {
+        if (validMoves !=  null) {
+            for (chess.ChessMove move:validMoves) {
                 highlights.add(move.getEndPosition());
             }
         }
-        drawBoard(playerColor, currentGame, highlights);
+
+        drawBoard(playerColor, currentGame,highlights);
+
     }
 
-    private void printHelpGameplay() {
+    private void printGameHelper( ) {
         System.out.print("redraw: redraw board\n" +
                 "leave: return to lobby\n" +
                 "make <START> <END> [PROMOTION]: move\n" +
@@ -171,21 +174,26 @@ public class ChessClient implements ServerMessageObserver {
                 "help: see menu\n");
     }
 
-    private void handleResign() throws FacadeException {
+    private void resignHandler() throws FacadeException {
         System.out.print("Are you sure you want to resign? (yes/no): ");
         Scanner s = new Scanner(System.in);
-        if (s.nextLine().equalsIgnoreCase("yes")) {
+
+        if (s.nextLine().equalsIgnoreCase("yes") ) {
+
             ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, currentGameID));
         }
     }
 
-    private void evalSignedOut(String[] tokens) throws FacadeException {
+    private void signingOut(String[] tokens) throws FacadeException {
         switch (tokens[0].toLowerCase()) {
+
+
             case "help":
-                printHelpOut();
+
+                printHelpOut() ;
                 break;
             case "login":
-                handleLogin(tokens);
+                loginHandler(tokens);
                 break;
             case "register":
                 handleRegister(tokens);
@@ -193,16 +201,16 @@ public class ChessClient implements ServerMessageObserver {
         }
     }
 
-    private void evalSignedIn(String[] tokens) throws FacadeException {
+    private void signingIn(String[] tokens) throws  FacadeException {
         switch (tokens[0].toLowerCase()) {
             case "help":
-                printHelpIn();
+                printHelpIn( );
                 break;
             case "create":
                 handleCreate(tokens);
                 break;
             case "list":
-                handleList(tokens);
+                listHandler(tokens);
                 break;
             case "join":
                 handleJoin(tokens);
@@ -210,9 +218,11 @@ public class ChessClient implements ServerMessageObserver {
             case "observe":
                 handleObserve(tokens);
                 break;
+
             case "logout":
-                handleLogout(tokens);
+                logoutHandler(tokens);
                 break;
+
         }
     }
 
@@ -233,26 +243,30 @@ public class ChessClient implements ServerMessageObserver {
                 "help: menu\n");
     }
 
-    private void handleLogin(String[] tokens) throws FacadeException {
+    private void loginHandler(String[] tokens) throws FacadeException {
         if (tokens.length != 3) {
+
+
             System.out.println("Expected 2 arguments: login <USERNAME> <PASSWORD>");
             return;
+
         }
         authToken = serverFacade.login(tokens[1], tokens[2]).authToken();
         state = State.SIGNED_IN;
     }
 
     private void handleRegister(String[] tokens) throws FacadeException {
-        if (tokens.length != 4) {
+        if (tokens.length != 4)  {
             System.out.println("Expected 3 arguments: register <USERNAME> <PASSWORD> <EMAIL>");
             return;
+
         }
         authToken = serverFacade.register(tokens[1], tokens[2], tokens[3]).authToken();
         state = State.SIGNED_IN;
     }
 
     private void handleCreate(String[] tokens) throws FacadeException {
-        if (tokens.length != 2) {
+        if (tokens.length !=  2) {
             System.out.println("Expected 1 argument: create <NAME>");
             return;
         }
@@ -260,13 +274,15 @@ public class ChessClient implements ServerMessageObserver {
         System.out.println("Created " + tokens[1]);
     }
 
-    private void handleList(String[] tokens) throws FacadeException {
-        if (tokens.length != 1) {
+    private void listHandler(String[] tokens) throws FacadeException {
+        if (tokens.length != 1 ) {
+
             System.out.println("No argument accepted for list");
             return;
         }
+
         this.cachedGames = new ArrayList<>(serverFacade.listGame(authToken).games());
-        if (cachedGames.isEmpty()) {
+        if (cachedGames.isEmpty( )) {
             System.out.println("No games found. Use 'create <NAME>' to start one");
             return;
         }
@@ -276,7 +292,7 @@ public class ChessClient implements ServerMessageObserver {
             String whiteUser = currentGame.whiteUsername() != null ? currentGame.whiteUsername() : "Empty";
             String blackUser = currentGame.blackUsername() != null ? currentGame.blackUsername() : "Empty";
             System.out.println((i + 1) + ". " + currentGame.gameName() +
-                    " | White: " + whiteUser +
+                    " | White: " + whiteUser  +
                     " | Black: " + blackUser);
         }
     }
@@ -286,16 +302,19 @@ public class ChessClient implements ServerMessageObserver {
             System.out.println("Expected 2 arguments: join <ID> [WHITE|BLACK]");
             return;
         }
-        if (cachedGames == null || cachedGames.isEmpty()) {
+
+
+        if (cachedGames == null || cachedGames.isEmpty( )) {
             System.out.println("Please 'list' games before attempting to join or observe");
             return;
         }
-        if (!Objects.equals(tokens[2].toUpperCase(), "WHITE") && !Objects.equals(tokens[2].toUpperCase(), "BLACK")) {
+        if (!Objects.equals(tokens[2].toUpperCase( ), "WHITE") && !Objects.equals(tokens[2].toUpperCase(), "BLACK")) {
             System.out.println("Second argument must be either 'WHITE' or 'BLACK'");
             return;
         }
+
         try {
-            GameData game = getGameFromToken(tokens[1]);
+            GameData game = gameFromToken(tokens[1]);
             this.currentGameID = game.gameID();
             this.playerColor = ChessGame.TeamColor.valueOf(tokens[2].toUpperCase());
             serverFacade.joinGame(authToken, tokens[2].toUpperCase(), currentGameID);
@@ -304,6 +323,7 @@ public class ChessClient implements ServerMessageObserver {
             ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
             this.state = State.GAMEPLAY;
         } catch (NumberFormatException e) {
+
             System.out.println("ID must be an integer");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -311,47 +331,52 @@ public class ChessClient implements ServerMessageObserver {
             this.ws = null;
         }
     }
-
     private void handleObserve(String[] tokens) {
-        if (tokens.length != 2) {
+        if (tokens.length != 2 ) {
             System.out.println("Expected 1 argument: observe <ID>");
             return;
+
         }
         if (cachedGames == null || cachedGames.isEmpty()) {
+
             System.out.println("Please 'list' games before attempting to join or observe");
             return;
         }
+
         try {
-            GameData game = getGameFromToken(tokens[1]);
+            GameData game = gameFromToken(tokens[1]);
             this.currentGameID = game.gameID();
             this.playerColor = ChessGame.TeamColor.WHITE;
             this.ws = new WebSocketFacade(serverURL, this);
             ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, currentGameID));
             this.state = State.GAMEPLAY;
         } catch (NumberFormatException e) {
-            System.out.println("ID must be an integer");
+
+            System.out.println("ID must be an integer" );
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+
             this.state = State.SIGNED_IN;
             this.ws = null;
         }
     }
 
-    private void handleLogout(String[] tokens) throws FacadeException {
+    private void logoutHandler(String[] tokens) throws FacadeException {
         if (tokens.length != 1) {
             System.out.println("No argument accepted for logout");
             return;
         }
+
         serverFacade.logout(authToken);
         this.authToken = null;
         this.state = State.SIGNED_OUT;
+
         System.out.println("Logged out successfully");
     }
 
     private void drawBoard(ChessGame.TeamColor perspective, ChessGame game) {
         drawBoard(perspective, game, null);
     }
-
     private void drawBoard(ChessGame.TeamColor perspective, ChessGame game, java.util.Collection<ChessPosition> highlights) {
         ChessBoard board = game.getBoard();
         int startRow = (perspective == ChessGame.TeamColor.BLACK) ? 1 : 8;
@@ -363,18 +388,21 @@ public class ChessClient implements ServerMessageObserver {
         String[] headers = (perspective == ChessGame.TeamColor.BLACK)
                 ? new String[]{"h", "g", "f", "e", "d", "c", "b", "a"}
                 : new String[]{"a", "b", "c", "d", "e", "f", "g", "h"};
-
         boardSetup(headers);
+
+
+
         for (int row = startRow; row != endRow + rowDirection; row += rowDirection) {
             System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY +
-                    EscapeSequences.SET_TEXT_COLOR_BLACK + " " + row + " ");
+                        EscapeSequences.SET_TEXT_COLOR_BLACK + " " + row + " ");
 
-            for (int col = startCol; col != endCol + colDirection; col += colDirection) {
-                ChessPosition currentPos = new ChessPosition(row, col);
+            for(int col = startCol; col != endCol + colDirection; col += colDirection) {
+                    ChessPosition currentPos = new ChessPosition(row, col);
                 boolean isHighlighted = (highlights != null && highlights.contains(currentPos));
 
+
                 if (isHighlighted) {
-                    System.out.print((row + col) % 2 != 0 ? EscapeSequences.SET_BG_COLOR_GREEN :
+                    System.out.print((row +  col) % 2 != 0 ? EscapeSequences.SET_BG_COLOR_GREEN :
                             EscapeSequences.SET_BG_COLOR_DARK_GREEN);
                 } else {
                     System.out.print((row + col) % 2 != 0 ? EscapeSequences.SET_BG_COLOR_WHITE :
@@ -382,7 +410,6 @@ public class ChessClient implements ServerMessageObserver {
                 }
                 printPiece(board.getPiece(currentPos));
             }
-
             System.out.println(EscapeSequences.SET_BG_COLOR_LIGHT_GREY +
                     EscapeSequences.SET_TEXT_COLOR_BLACK + " " + row + " " +
                     EscapeSequences.RESET_BG_COLOR);
@@ -392,14 +419,17 @@ public class ChessClient implements ServerMessageObserver {
 
     private void boardSetup(String[] headers) {
         System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY + EscapeSequences.SET_TEXT_COLOR_BLACK + "   ");
-        for (String header : headers) {
-            System.out.print(" " + header + " ");
+        for (String header : headers ) {
+            System.out.print(" " +  header + " ");
         }
         System.out.println("   " + EscapeSequences.RESET_BG_COLOR);
     }
 
+
     private void printPiece(ChessPiece piece) {
         if (piece == null) {
+
+
             System.out.print(EscapeSequences.EMPTY);
             return;
         }
@@ -415,22 +445,26 @@ public class ChessClient implements ServerMessageObserver {
         }
     }
 
-    private GameData getGameFromToken(String token) throws IllegalArgumentException {
+    private GameData gameFromToken(String token) throws IllegalArgumentException {
         int index = Integer.parseInt(token) - 1;
         if (index < 0 || index >= cachedGames.size()) {
+
             throw new IllegalArgumentException("Invalid game number");
         }
         return cachedGames.get(index);
+
     }
 
     @Override
     public void notify(ServerMessage message) {
         try {
-            switch (message.getServerMessageType()) {
+            switch (message.getServerMessageType( )) {
                 case LOAD_GAME -> {
+
                     System.out.println();
                     this.currentGame = ((LoadGameMessage) message).getGame();
                     if (this.currentGame == null) {
+
                         System.out.println(EscapeSequences.SET_TEXT_COLOR_RED +
                                 "Data Error: The server sent an empty game state.");
                     } else if (this.currentGame.getBoard() == null) {
@@ -440,11 +474,12 @@ public class ChessClient implements ServerMessageObserver {
                         drawBoard(playerColor, this.currentGame);
                     }
                     printPrompt();
+
                 }
-                case NOTIFICATION -> {
-                    System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + "\n" +
-                            ((NotificationMessage) message).getMessage());
-                    printPrompt();
+                    case NOTIFICATION -> {
+                     System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + "\n" +
+                                ((NotificationMessage) message).getMessage());
+                        printPrompt();
                 }
                 case ERROR -> {
                     System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "\n" +
@@ -459,8 +494,8 @@ public class ChessClient implements ServerMessageObserver {
         }
     }
 
-    private void printPrompt() {
+    private void printPrompt( ) {
         System.out.print("\n[" + state + "] >>> ");
-        System.out.flush();
+        System.out.flush( );
     }
 }

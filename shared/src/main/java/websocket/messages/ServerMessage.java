@@ -10,18 +10,15 @@ import java.util.Objects;
  */
 public class ServerMessage {
     ServerMessageType serverMessageType;
-
     public enum ServerMessageType {
         LOAD_GAME,
         ERROR,
         NOTIFICATION
     }
-
     public ServerMessage(ServerMessageType type) {
         this.serverMessageType = type;
     }
-
-    public ServerMessageType getServerMessageType() {
+    public ServerMessageType getServerMessageType( ) {
         return this.serverMessageType;
     }
 
@@ -33,7 +30,7 @@ public class ServerMessage {
         if (!(o instanceof ServerMessage that)) {
             return false;
         }
-        return getServerMessageType() == that.getServerMessageType();
+        return getServerMessageType( ) == that.getServerMessageType();
     }
 
     @Override

@@ -9,19 +9,15 @@ import org.jetbrains.annotations.NotNull;
  * signature of the existing methods.
  */
 public record ChessMove(ChessPosition startPosition, ChessPosition endPosition, ChessPiece.PieceType promotionPiece) {
-
     public ChessPosition getStartPosition() {
         return startPosition;
     }
-
     public ChessPosition getEndPosition() {
         return endPosition;
     }
-
     public ChessPiece.PieceType getPromotionPiece() {
         return promotionPiece;
     }
-
     /**
      * @return ChessPosition of starting location
      */
@@ -67,6 +63,7 @@ public record ChessMove(ChessPosition startPosition, ChessPosition endPosition, 
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+
 
         ChessMove chessMove = (ChessMove) o;
 

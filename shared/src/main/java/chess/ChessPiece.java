@@ -64,12 +64,14 @@ public class ChessPiece {
             moves.addAll(calc.getMoves(board, myPosition));
         }
 
-        if (getPieceType() == PieceType.QUEEN) {
+        if (getPieceType( ) == PieceType.QUEEN) {
             QueenMoves calc = new QueenMoves();
             moves.addAll(calc.getMoves(board, myPosition));
+
         }
 
         if (getPieceType() == PieceType.ROOK) {
+
             RookMoves calc = new RookMoves();
             moves.addAll(calc.getMoves(board, myPosition));
         }
@@ -79,7 +81,7 @@ public class ChessPiece {
             moves.addAll(calc.getMoves(board, myPosition));
         }
 
-        if (getPieceType() == PieceType.KNIGHT){
+        if (getPieceType( ) == PieceType.KNIGHT){
             KnightMoves calc = new KnightMoves();
             moves.addAll(calc.getMoves(board, myPosition));
         }

@@ -152,7 +152,7 @@ public class  ChessClient  implements ServerMessageObserver {
             System.out.println("Game state is not loaded yet.");
             return;
         }
-        java.util.Collection<chess.ChessMove> validMoves = currentGame.legal(pos);
+        java.util.Collection<chess.ChessMove> validMoves = currentGame.valid(pos);
         java.util.Collection<chess.ChessPosition> highlights = new java.util.ArrayList<>();
         highlights.add(pos);
         if (validMoves !=  null) {
@@ -170,7 +170,7 @@ public class  ChessClient  implements ServerMessageObserver {
                 "leave: return to lobby\n" +
                 "make <START> <END> [PROMOTION]: move\n" +
                 "resign: forfeit game\n" +
-                "highlight <PIECE>: see legal moves\n" +
+                "highlight <PIECE>: see valid moves\n" +
                 "help: see menu\n");
     }
 

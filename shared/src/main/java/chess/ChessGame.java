@@ -8,17 +8,14 @@ public class ChessGame {
     private TeamColor movingPiece;
     private ChessBoard board;
     private boolean isGameOver = false;
-
     public ChessGame() {
         this.movingPiece = TeamColor.WHITE;
-        this.board = new ChessBoard();
+        this.board = new ChessBoard( );
         this.board.resetBoard();
     }
-
     public TeamColor getTeamTurn() {
         return movingPiece;
     }
-
     public void setTeamTurn(TeamColor team) {
         this.movingPiece = team;
     }
@@ -28,7 +25,7 @@ public class ChessGame {
         BLACK
     }
 
-    public Collection<ChessMove> validMoves(ChessPosition startPosition) {
+    public Collection<ChessMove> legal(ChessPosition startPosition) {
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(startPosition);
 
@@ -56,7 +53,7 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessBoard board = getBoard();
         ChessPiece piece = board.getPiece(move.startPosition());
-        Collection<ChessMove> legalMoves = validMoves(move.startPosition());
+        Collection<ChessMove> legalMoves = legal(move.startPosition());
 
         if (piece == null) {
             throw new InvalidMoveException("There is no piece at the selected start position.");
@@ -125,7 +122,7 @@ public class ChessGame {
                 ChessPosition myPosition = new ChessPosition(row, col);
                 ChessPiece piece = getBoard().getPiece(myPosition);
                 if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> legalMoves = validMoves(myPosition);
+                    Collection<ChessMove> legalMoves = legal(myPosition);
                     if (legalMoves != null && !legalMoves.isEmpty()) {
                         return false;
                     }

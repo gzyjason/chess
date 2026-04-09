@@ -12,23 +12,20 @@ import java.net.URL;
 
 public class ServerFacade {
     String serverUrl;
-
-    private final Gson gson = new GsonBuilder().serializeNulls().create();
-
+    private final Gson gson= new GsonBuilder().serializeNulls().create();
     public ServerFacade(String serverUrl){
         this.serverUrl = serverUrl;
     }
-
     public RegisterResult register(String username, String password, String email) throws FacadeException {
         RegisterRequest request = new RegisterRequest(username, password, email);
+
         return httpRequests("POST", "/user", request, RegisterResult.class, null);
     }
 
     public LoginResult login(String username, String password) throws FacadeException{
-        LoginRequest request = new LoginRequest(username, password);
-        return httpRequests("POST", "/session", request, LoginResult.class, null);
+        LoginRequest request =  new LoginRequest(username, password);
+        return  httpRequests("POST", "/session", request, LoginResult.class, null);
     }
-
     public void logout(String authToken) throws FacadeException {
         httpRequests("DELETE", "/session", null, null, authToken);
     }
@@ -50,17 +47,16 @@ public class ServerFacade {
     public void observeGame(String authToken, int gameID) throws FacadeException {
         ListGamesResult gamesResult = listGame(authToken);
         boolean gameExists = false;
-
-        for (var game : gamesResult.games()) {
+        for (var game : gamesResult.games( )) {
             if (game.gameID() == gameID) {
                 gameExists = true;
                 break;
             }
         }
-
         if (!gameExists) {
             throw new FacadeException(400, "Error: bad request");
         }
+
     }
 
     public void clear() throws FacadeException{
@@ -70,11 +66,10 @@ public class ServerFacade {
     private <T> T httpRequests(String method, String path, Object requestData, Class<T> responseClass,
                                String headerToken) throws FacadeException {
         try {
-            URI uri = new URI(serverUrl + path);
+                URI uri = new URI(serverUrl + path);
             URL url = uri.toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-
             if (headerToken != null) {
                 http.addRequestProperty("authorization", headerToken);
             }
@@ -84,14 +79,12 @@ public class ServerFacade {
                 http.addRequestProperty("Content-Type", "application/json");
                 try (OutputStream output = http.getOutputStream()){
                     String json =this.gson.toJson(requestData);
-
                     output.write(json.getBytes());
                 }
             }
             http.connect();
 
             int responseCode = http.getResponseCode();
-
             if (responseCode >= 300) {
                 try (InputStream errors = http.getErrorStream()){
                     InputStreamReader reader = new InputStreamReader(errors);
@@ -110,11 +103,10 @@ public class ServerFacade {
             return null;
         } catch (FacadeException ex){
             throw ex;
+
         } catch (Exception ex) {
             throw new FacadeException(500, ex.getMessage());
         }
-
-
 
     }
 

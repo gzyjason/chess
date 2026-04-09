@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ValidMovesTests {
-    private static final String TRAPPED_PIECE_MOVES = "ChessGame validMoves returned valid moves for a trapped piece";
+    private static final String TRAPPED_PIECE_MOVES = "ChessGame legal returned valid moves for a trapped piece";
 
     @Test
     @DisplayName("Check Forces Movement")
@@ -84,7 +84,7 @@ public class ValidMovesTests {
                     """));
 
         ChessPosition position = new ChessPosition(4, 4);
-        Assertions.assertTrue(game.validMoves(position).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(position).isEmpty(), TRAPPED_PIECE_MOVES);
     }
 
 
@@ -119,11 +119,11 @@ public class ValidMovesTests {
         assertMoves(game, validMoves, kingPosition);
 
         //make sure teams other pieces are not allowed to move
-        Assertions.assertTrue(game.validMoves(pawnPosition).isEmpty(), TRAPPED_PIECE_MOVES);
-        Assertions.assertTrue(game.validMoves(bishopPosition).isEmpty(), TRAPPED_PIECE_MOVES);
-        Assertions.assertTrue(game.validMoves(queenPosition).isEmpty(), TRAPPED_PIECE_MOVES);
-        Assertions.assertTrue(game.validMoves(knightPosition).isEmpty(), TRAPPED_PIECE_MOVES);
-        Assertions.assertTrue(game.validMoves(rookPosition).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(pawnPosition).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(bishopPosition).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(queenPosition).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(knightPosition).isEmpty(), TRAPPED_PIECE_MOVES);
+        Assertions.assertTrue(game.legal(rookPosition).isEmpty(), TRAPPED_PIECE_MOVES);
     }
 
 
@@ -165,7 +165,7 @@ public class ValidMovesTests {
     }
 
     private static void assertMoves(ChessGame game, List<ChessMove> validMoves, ChessPosition position) {
-        var generatedMoves = game.validMoves(position);
+        var generatedMoves = game.legal(position);
         var actualMoves = new ArrayList<>(generatedMoves);
         TestUtilities.validateMoves(validMoves, actualMoves);
     }
